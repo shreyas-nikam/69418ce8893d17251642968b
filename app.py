@@ -5,11 +5,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-st.set_page_config(page_title="QuLab: PE-AI readiness simulator", layout="wide")
+st.set_page_config(
+    page_title="QuLab: PE-AI readiness simulator", layout="wide")
 st.sidebar.image("https://www.quantuniversity.com/assets/img/logo5.jpg")
 st.sidebar.divider()
 # FIX: Made the main title dynamic to include company name, as expected by tests
-st.title(f"QuLab: PE-AI readiness simulator - {st.session_state.get('company_name', 'InnovateCo')}")
+st.title(
+    f"QuLab: PE-AI readiness simulator - {st.session_state.get('company_name', 'InnovateCo')}")
 st.divider()
 
 st.markdown("""
@@ -173,14 +175,14 @@ session_state_defaults = {
     'exit_visible_score': 30,
     'exit_documented_score': 20,
     'exit_sustainable_score': 25,
-    'idiosyncratic_readiness': 0.0, # Will be calculated
-    'innovateco_dimension_scores_df': pd.DataFrame(), # Will be calculated
-    'current_weights': {}, # Will be calculated
-    'pe_org_ai_r_score': 0.0, # Will be calculated
-    'gap_analysis_df': pd.DataFrame(), # Will be calculated
-    'scenario_results_df': pd.DataFrame(), # Will be calculated
-    'sensitivity_df': pd.DataFrame(), # Will be calculated
-    'exit_ai_r_score': 0.0 # Will be calculated
+    'idiosyncratic_readiness': 0.0,  # Will be calculated
+    'innovateco_dimension_scores_df': pd.DataFrame(),  # Will be calculated
+    'current_weights': {},  # Will be calculated
+    'pe_org_ai_r_score': 0.0,  # Will be calculated
+    'gap_analysis_df': pd.DataFrame(),  # Will be calculated
+    'scenario_results_df': pd.DataFrame(),  # Will be calculated
+    'sensitivity_df': pd.DataFrame(),  # Will be calculated
+    'exit_ai_r_score': 0.0  # Will be calculated
 }
 
 for key, default_value in session_state_defaults.items():
@@ -189,20 +191,23 @@ for key, default_value in session_state_defaults.items():
 
 # --- Helper Functions (Pure functions, no session_state access directly inside) ---
 
+
 def get_dimension_weights(industry: str) -> dict:
     """Returns sector-specific weights or default if not found."""
     return SECTOR_DIMENSION_WEIGHTS.get(industry, DEFAULT_DIMENSION_WEIGHTS)
 
+
 def calculate_idiosyncratic_readiness(raw_ratings: dict, industry: str) -> tuple[float, pd.DataFrame, dict]:
     """Calculates Idiosyncratic Readiness score and dimension scores."""
     weights = get_dimension_weights(industry)
-    
+
     # Normalize raw ratings (1-5 scale) to (0-100 scale)
     normalized_ratings = {k: (v / 5) * 100 for k, v in raw_ratings.items()}
-    
+
     # Calculate weighted sum
-    weighted_sum = sum(normalized_ratings[dim] * weights.get(dim, 0) for dim in raw_ratings.keys())
-    
+    weighted_sum = sum(
+        normalized_ratings[dim] * weights.get(dim, 0) for dim in raw_ratings.keys())
+
     overall_score = weighted_sum
 
     dimension_data = []
@@ -214,13 +219,14 @@ def calculate_idiosyncratic_readiness(raw_ratings: dict, industry: str) -> tuple
             'Weight': weight
         })
     df = pd.DataFrame(dimension_data)
-    
+
     return overall_score, df, weights
+
 
 def calculate_pe_org_ai_r(idiosyncratic_readiness: float, systematic_opportunity: float,
                           alpha: float, beta: float, synergy_score: float) -> float:
     """Calculates the PE Org-AI-R Score."""
-    
+
     pe_org_ai_r = (alpha * idiosyncratic_readiness) + \
                   ((1 - alpha) * systematic_opportunity) + \
                   (beta * synergy_score)
@@ -228,23 +234,24 @@ def calculate_pe_org_ai_r(idiosyncratic_readiness: float, systematic_opportunity
     # Clamp the score between 0 and 100
     return max(0, min(100, pe_org_ai_r))
 
+
 def perform_gap_analysis(company_dimension_scores: pd.DataFrame, industry_benchmarks: dict, industry: str) -> pd.DataFrame:
     """Compares company scores to industry benchmarks and calculates gaps."""
     benchmarks = industry_benchmarks.get(industry, {})
-    
+
     gap_data = []
     for _, row in company_dimension_scores.iterrows():
         dimension = row['Dimension']
         company_score = row['Normalized Score (0-100)']
         benchmark_score = benchmarks.get(dimension, 0)
         gap = benchmark_score - company_score
-        
+
         priority = "Low"
         if gap > 20:
             priority = "High"
         elif gap > 10:
             priority = "Medium"
-            
+
         gap_data.append({
             'Dimension': dimension,
             'Company Score': company_score,
@@ -253,68 +260,83 @@ def perform_gap_analysis(company_dimension_scores: pd.DataFrame, industry_benchm
             'Priority': priority
         })
     df = pd.DataFrame(gap_data)
-    df['Color'] = df['Priority'].map({'High': 'red', 'Medium': 'orange', 'Low': 'green'})
+    df['Color'] = df['Priority'].map(
+        {'High': 'red', 'Medium': 'orange', 'Low': 'green'})
     return df
+
 
 def run_scenario_analysis(base_raw_ratings: dict, industry: str, alpha: float, beta: float, synergy_score: float,
                           scenario_definitions: dict) -> pd.DataFrame:
     """Runs different scenarios and calculates PE Org-AI-R scores for each."""
-    
+
     scenario_results = []
     for scenario_name, changes in scenario_definitions.items():
         temp_raw_ratings = base_raw_ratings.copy()
         temp_synergy_score = synergy_score
-        
+
         # Apply changes for the scenario
         for dim, change in changes.items():
             if dim == 'Synergy Score':
                 temp_synergy_score = max(0, min(100, synergy_score + change))
             else:
                 if dim in temp_raw_ratings:
-                    temp_raw_ratings[dim] = max(1, min(5, temp_raw_ratings[dim] + change))
-        
-        idiosyncratic_readiness_score, _, _ = calculate_idiosyncratic_readiness(temp_raw_ratings, industry)
-        systematic_opportunity_score = SYSTEMATIC_OPPORTUNITY_SCORES.get(industry, 0)
-        
+                    temp_raw_ratings[dim] = max(
+                        1, min(5, temp_raw_ratings[dim] + change))
+
+        idiosyncratic_readiness_score, _, _ = calculate_idiosyncratic_readiness(
+            temp_raw_ratings, industry)
+        systematic_opportunity_score = SYSTEMATIC_OPPORTUNITY_SCORES.get(
+            industry, 0)
+
         org_ai_r_score = calculate_pe_org_ai_r(idiosyncratic_readiness_score, systematic_opportunity_score,
                                                alpha, beta, temp_synergy_score)
-        
-        scenario_results.append({'Scenario': scenario_name, 'PE Org-AI-R Score': org_ai_r_score})
-        
+
+        scenario_results.append(
+            {'Scenario': scenario_name, 'PE Org-AI-R Score': org_ai_r_score})
+
     return pd.DataFrame(scenario_results)
+
 
 def perform_sensitivity_analysis(base_raw_ratings: dict, industry: str, alpha: float, beta: float, synergy_score: float,
                                  change_delta: int) -> pd.DataFrame:
     """Performs sensitivity analysis on each dimension's raw rating."""
-    
-    base_idiosyncratic_readiness, _, _ = calculate_idiosyncratic_readiness(base_raw_ratings, industry)
+
+    base_idiosyncratic_readiness, _, _ = calculate_idiosyncratic_readiness(
+        base_raw_ratings, industry)
     systematic_opportunity = SYSTEMATIC_OPPORTUNITY_SCORES.get(industry, 0)
-    base_org_ai_r = calculate_pe_org_ai_r(base_idiosyncratic_readiness, systematic_opportunity, alpha, beta, synergy_score)
-    
+    base_org_ai_r = calculate_pe_org_ai_r(
+        base_idiosyncratic_readiness, systematic_opportunity, alpha, beta, synergy_score)
+
     sensitivity_data = []
     dimensions = list(base_raw_ratings.keys())
-    
+
     # Sensitivity for each dimension
     for dim in dimensions:
         # Increase scenario
         temp_raw_ratings_increase = base_raw_ratings.copy()
-        temp_raw_ratings_increase[dim] = max(1, min(5, base_raw_ratings[dim] + change_delta))
-        
-        idiosyncratic_readiness_increase, _, _ = calculate_idiosyncratic_readiness(temp_raw_ratings_increase, industry)
-        org_ai_r_increase = calculate_pe_org_ai_r(idiosyncratic_readiness_increase, systematic_opportunity, alpha, beta, synergy_score)
-        
+        temp_raw_ratings_increase[dim] = max(
+            1, min(5, base_raw_ratings[dim] + change_delta))
+
+        idiosyncratic_readiness_increase, _, _ = calculate_idiosyncratic_readiness(
+            temp_raw_ratings_increase, industry)
+        org_ai_r_increase = calculate_pe_org_ai_r(
+            idiosyncratic_readiness_increase, systematic_opportunity, alpha, beta, synergy_score)
+
         sensitivity_data.append({
             'Dimension Change': f"{dim} (+{change_delta} Raw Rating)",
             'Impact on PE Org-AI-R': org_ai_r_increase - base_org_ai_r
         })
-        
+
         # Decrease scenario
         temp_raw_ratings_decrease = base_raw_ratings.copy()
-        temp_raw_ratings_decrease[dim] = max(1, min(5, base_raw_ratings[dim] - change_delta))
-        
-        idiosyncratic_readiness_decrease, _, _ = calculate_idiosyncratic_readiness(temp_raw_ratings_decrease, industry)
-        org_ai_r_decrease = calculate_pe_org_ai_r(idiosyncratic_readiness_decrease, systematic_opportunity, alpha, beta, synergy_score)
-        
+        temp_raw_ratings_decrease[dim] = max(
+            1, min(5, base_raw_ratings[dim] - change_delta))
+
+        idiosyncratic_readiness_decrease, _, _ = calculate_idiosyncratic_readiness(
+            temp_raw_ratings_decrease, industry)
+        org_ai_r_decrease = calculate_pe_org_ai_r(
+            idiosyncratic_readiness_decrease, systematic_opportunity, alpha, beta, synergy_score)
+
         sensitivity_data.append({
             'Dimension Change': f"{dim} (-{change_delta} Raw Rating)",
             'Impact on PE Org-AI-R': org_ai_r_decrease - base_org_ai_r
@@ -322,17 +344,21 @@ def perform_sensitivity_analysis(base_raw_ratings: dict, industry: str, alpha: f
 
     # Sensitivity for Synergy Score
     # Scale change_delta for synergy for a meaningful impact (e.g., 1 point raw rating change vs 10 points synergy score)
-    synergy_change_value = change_delta * 10 
-    
-    temp_synergy_increase = max(0, min(100, synergy_score + synergy_change_value))
-    org_ai_r_synergy_increase = calculate_pe_org_ai_r(base_idiosyncratic_readiness, systematic_opportunity, alpha, beta, temp_synergy_increase)
+    synergy_change_value = change_delta * 10
+
+    temp_synergy_increase = max(
+        0, min(100, synergy_score + synergy_change_value))
+    org_ai_r_synergy_increase = calculate_pe_org_ai_r(
+        base_idiosyncratic_readiness, systematic_opportunity, alpha, beta, temp_synergy_increase)
     sensitivity_data.append({
         'Dimension Change': f"Synergy Score (+{synergy_change_value})",
         'Impact on PE Org-AI-R': org_ai_r_synergy_increase - base_org_ai_r
     })
-    
-    temp_synergy_decrease = max(0, min(100, synergy_score - synergy_change_value))
-    org_ai_r_synergy_decrease = calculate_pe_org_ai_r(base_idiosyncratic_readiness, systematic_opportunity, alpha, beta, temp_synergy_decrease)
+
+    temp_synergy_decrease = max(
+        0, min(100, synergy_score - synergy_change_value))
+    org_ai_r_synergy_decrease = calculate_pe_org_ai_r(
+        base_idiosyncratic_readiness, systematic_opportunity, alpha, beta, temp_synergy_decrease)
     sensitivity_data.append({
         'Dimension Change': f"Synergy Score (-{synergy_change_value})",
         'Impact on PE Org-AI-R': org_ai_r_synergy_decrease - base_org_ai_r
@@ -341,6 +367,7 @@ def perform_sensitivity_analysis(base_raw_ratings: dict, industry: str, alpha: f
     df = pd.DataFrame(sensitivity_data)
     df = df.sort_values(by='Impact on PE Org-AI-R', ascending=True)
     return df
+
 
 def calculate_exit_ai_r(visible_score: float, documented_score: float, sustainable_score: float, weights: dict) -> float:
     """Calculates the Exit-AI-R Score."""
@@ -351,6 +378,7 @@ def calculate_exit_ai_r(visible_score: float, documented_score: float, sustainab
 
 # --- Streamlit Application Flow ---
 
+
 # 1. Welcome & Company Selection
 st.header("1. Welcome & Company Selection")
 st.markdown("""
@@ -360,17 +388,18 @@ adjust our analytical framework, including industry-specific benchmarks and dime
 
 col1, col2 = st.columns(2)
 with col1:
-    st.text_input( # Changed to allow widget to manage session_state directly
+    st.text_input(  # Changed to allow widget to manage session_state directly
         "Target Company Name",
         value=st.session_state.company_name,
-        key="company_name" # Key is 'company_name' to directly modify st.session_state.company_name
+        key="company_name"  # Key is 'company_name' to directly modify st.session_state.company_name
     )
 with col2:
-    st.selectbox( # Changed to allow widget to manage session_state directly
+    st.selectbox(  # Changed to allow widget to manage session_state directly
         "Company Industry Sector",
         options=list(SYSTEMATIC_OPPORTUNITY_SCORES.keys()),
-        index=list(SYSTEMATIC_OPPORTUNITY_SCORES.keys()).index(st.session_state.company_industry),
-        key="company_industry" # Key is 'company_industry'
+        index=list(SYSTEMATIC_OPPORTUNITY_SCORES.keys()).index(
+            st.session_state.company_industry),
+        key="company_industry"  # Key is 'company_industry'
     )
 
 st.divider()
@@ -386,15 +415,22 @@ and `Industry Benchmarks` against which we will compare {st.session_state.compan
 
 with st.expander("View Framework Parameters"):
     st.markdown("##### Systematic Opportunity Scores by Industry")
-    st.dataframe(pd.DataFrame(list(SYSTEMATIC_OPPORTUNITY_SCORES.items()), columns=['Industry', 'Score']), width='stretch') # FIX: use_container_width -> width
-    
-    st.markdown(f"##### AI Readiness Dimension Weights for {st.session_state.company_industry}")
-    current_weights_df = pd.DataFrame(list(get_dimension_weights(st.session_state.company_industry).items()), columns=['Dimension', 'Weight'])
-    st.dataframe(current_weights_df, width='stretch') # FIX: use_container_width -> width
+    st.dataframe(pd.DataFrame(list(SYSTEMATIC_OPPORTUNITY_SCORES.items()), columns=[
+                 'Industry', 'Score']), width='stretch')  # FIX: use_container_width -> width
 
-    st.markdown(f"##### Industry Benchmarks for {st.session_state.company_industry}")
-    benchmark_df = pd.DataFrame(list(INDUSTRY_BENCHMARKS.get(st.session_state.company_industry, {}).items()), columns=['Dimension', 'Benchmark Score (0-100)'])
-    st.dataframe(benchmark_df, width='stretch') # FIX: use_container_width -> width
+    st.markdown(
+        f"##### AI Readiness Dimension Weights for {st.session_state.company_industry}")
+    current_weights_df = pd.DataFrame(list(get_dimension_weights(
+        st.session_state.company_industry).items()), columns=['Dimension', 'Weight'])
+    # FIX: use_container_width -> width
+    st.dataframe(current_weights_df, width='stretch')
+
+    st.markdown(
+        f"##### Industry Benchmarks for {st.session_state.company_industry}")
+    benchmark_df = pd.DataFrame(list(INDUSTRY_BENCHMARKS.get(st.session_state.company_industry, {
+    }).items()), columns=['Dimension', 'Benchmark Score (0-100)'])
+    # FIX: use_container_width -> width
+    st.dataframe(benchmark_df, width='stretch')
 
 st.divider()
 
@@ -425,13 +461,16 @@ for i, (dim, key) in enumerate(dimension_ratings_keys.items()):
             min_value=1,
             max_value=5,
             step=1,
-            value=st.session_state[key], # This reads the current value from session state
-            key=key # This updates st.session_state[key] directly when the slider is moved
+            # This reads the current value from session state
+            value=st.session_state[key],
+            # This updates st.session_state[key] directly when the slider is moved
+            key=key
         )
 
 # Populate raw_dimension_ratings from session state after all sliders have been rendered
-raw_ratings_from_session = {dim: st.session_state[key] for dim, key in dimension_ratings_keys.items()}
-st.session_state.raw_dimension_ratings = raw_ratings_from_session 
+raw_ratings_from_session = {
+    dim: st.session_state[key] for dim, key in dimension_ratings_keys.items()}
+st.session_state.raw_dimension_ratings = raw_ratings_from_session
 st.divider()
 
 # 4. Calculate Normalized Idiosyncratic Readiness
@@ -464,16 +503,19 @@ st.metric(label=f"{st.session_state.company_name}'s Idiosyncratic Readiness Scor
           value=f"{st.session_state.idiosyncratic_readiness:.2f}")
 
 st.markdown("##### Detailed Idiosyncratic Readiness Scores by Dimension")
-st.dataframe(st.session_state.innovateco_dimension_scores_df.set_index('Dimension'), width='stretch') # FIX: use_container_width -> width
+st.dataframe(st.session_state.innovateco_dimension_scores_df.set_index(
+    'Dimension'), width='stretch')  # FIX: use_container_width -> width
 
 # Plot: Idiosyncratic Readiness Dimension Scores
 fig_idio, ax_idio = plt.subplots(figsize=(10, 6))
-sns.barplot(x='Normalized Score (0-100)', y='Dimension', data=st.session_state.innovateco_dimension_scores_df.sort_values(by='Normalized Score (0-100)', ascending=False), palette='viridis', ax=ax_idio)
-ax_idio.set_title(f"{st.session_state.company_name}'s Idiosyncratic AI Readiness by Dimension")
+sns.barplot(x='Normalized Score (0-100)', y='Dimension', data=st.session_state.innovateco_dimension_scores_df.sort_values(
+    by='Normalized Score (0-100)', ascending=False), palette='viridis', ax=ax_idio)
+ax_idio.set_title(
+    f"{st.session_state.company_name}'s Idiosyncratic AI Readiness by Dimension")
 ax_idio.set_xlabel("Score (0-100)")
 ax_idio.set_ylabel("AI Readiness Dimension")
 st.pyplot(fig_idio)
-plt.close(fig_idio) # Close figure to prevent memory issues
+plt.close(fig_idio)  # Close figure to prevent memory issues
 
 st.info(f"""
 **Analyst Note:** This chart provides a granular view of {st.session_state.company_name}'s internal AI capabilities.
@@ -504,17 +546,18 @@ where:
 *   $Synergy$ is a conceptual score (0-100) reflecting how well InnovateCo's internal readiness aligns with and amplifies market potential.
 """)
 
-systematic_opportunity_score = SYSTEMATIC_OPPORTUNITY_SCORES.get(st.session_state.company_industry, 0)
+systematic_opportunity_score = SYSTEMATIC_OPPORTUNITY_SCORES.get(
+    st.session_state.company_industry, 0)
 
 col1_org, col2_org = st.columns(2)
 with col1_org:
-    st.slider( # Removed direct assignment to st.session_state
-        "Weight on Organizational Factors ($\alpha$)",
+    st.slider(  # Removed direct assignment to st.session_state
+        "Weight on Organizational Factors ($\\alpha$)",
         min_value=0.0,
         max_value=1.0,
         step=0.05,
         value=st.session_state.alpha_param,
-        key="alpha_param" # Key is 'alpha_param'
+        key="alpha_param"  # Key is 'alpha_param'
     )
     # FIX: Use raw f-string and double braces for literal curly braces in LaTeX
     st.markdown(rf"""
@@ -523,13 +566,13 @@ with col1_org:
     the company's internal strengths more heavily.</i></small>
     """, unsafe_allow_html=True)
 with col2_org:
-    st.slider( # Removed direct assignment to st.session_state
-        "Synergy Coefficient ($\beta$)",
+    st.slider(  # Removed direct assignment to st.session_state
+        "Synergy Coefficient ($\\beta$)",
         min_value=0.0,
         max_value=1.0,
         step=0.01,
         value=st.session_state.beta_param,
-        key="beta_param" # Key is 'beta_param'
+        key="beta_param"  # Key is 'beta_param'
     )
     # FIX: Use raw f-string and double braces for literal curly braces in LaTeX
     st.markdown(rf"""
@@ -537,13 +580,13 @@ with col2_org:
     how much the alignment between internal capabilities and market potential affects the overall score.</i></small>
     """, unsafe_allow_html=True)
 
-st.slider( # Removed direct assignment to st.session_state
+st.slider(  # Removed direct assignment to st.session_state
     "Synergy Score (0-100)",
     min_value=0,
     max_value=100,
     step=1,
     value=st.session_state.synergy_score,
-    key="synergy_score" # Key is 'synergy_score'
+    key="synergy_score"  # Key is 'synergy_score'
 )
 st.markdown(f"""
 <small><i>This score represents Alex's expert assessment of how well {st.session_state.company_name}'s existing (or potential)
@@ -597,13 +640,18 @@ gap_analysis_df = perform_gap_analysis(
 st.session_state.gap_analysis_df = gap_analysis_df
 
 st.markdown("##### AI Readiness Gap Analysis")
-st.dataframe(st.session_state.gap_analysis_df[['Dimension', 'Company Score', 'Benchmark Score', 'Gap (Benchmark - Company)', 'Priority']], width='stretch') # FIX: use_container_width -> width
+st.dataframe(st.session_state.gap_analysis_df[['Dimension', 'Company Score', 'Benchmark Score',
+             # FIX: use_container_width -> width
+                                               'Gap (Benchmark - Company)', 'Priority']], width='stretch')
 
 # Plot 1: Comparative Bar Chart
-df_plot_compare = st.session_state.gap_analysis_df[['Dimension', 'Company Score', 'Benchmark Score']].melt(id_vars='Dimension', var_name='Type', value_name='Score')
+df_plot_compare = st.session_state.gap_analysis_df[['Dimension', 'Company Score', 'Benchmark Score']].melt(
+    id_vars='Dimension', var_name='Type', value_name='Score')
 fig_comp, ax_comp = plt.subplots(figsize=(12, 7))
-sns.barplot(x='Dimension', y='Score', hue='Type', data=df_plot_compare, palette={'Company Score': 'skyblue', 'Benchmark Score': 'orange'}, ax=ax_comp)
-ax_comp.set_title(f"{st.session_state.company_name} vs. {st.session_state.company_industry} Benchmarks by AI Readiness Dimension")
+sns.barplot(x='Dimension', y='Score', hue='Type', data=df_plot_compare, palette={
+            'Company Score': 'skyblue', 'Benchmark Score': 'orange'}, ax=ax_comp)
+ax_comp.set_title(
+    f"{st.session_state.company_name} vs. {st.session_state.company_industry} Benchmarks by AI Readiness Dimension")
 ax_comp.set_xlabel("AI Readiness Dimension")
 ax_comp.set_ylabel("Score (0-100)")
 ax_comp.set_ylim(0, 100)
@@ -616,7 +664,8 @@ plt.close(fig_comp)
 fig_gaps, ax_gaps = plt.subplots(figsize=(12, 7))
 sns.barplot(x='Gap (Benchmark - Company)', y='Dimension', data=st.session_state.gap_analysis_df.sort_values(by='Gap (Benchmark - Company)', ascending=False),
             palette=st.session_state.gap_analysis_df['Color'].tolist(), ax=ax_gaps)
-ax_gaps.set_title(f"AI Readiness Gaps for {st.session_state.company_name} Against {st.session_state.company_industry} Benchmarks")
+ax_gaps.set_title(
+    f"AI Readiness Gaps for {st.session_state.company_name} Against {st.session_state.company_industry} Benchmarks")
 ax_gaps.set_xlabel("Gap (Benchmark Score - Company Score)")
 ax_gaps.set_ylabel("AI Readiness Dimension")
 ax_gaps.axvline(0, color='grey', linestyle='--')
@@ -640,12 +689,12 @@ upside of targeted AI initiatives and develop a strategic roadmap for the Portfo
 """)
 
 scenario_definitions = {
-    'Base Case (Current)': {}, # No changes from current state
+    'Base Case (Current)': {},  # No changes from current state
     'Optimistic Scenario': {
-        'Data Infrastructure': 2, # +2 improvement in raw rating
+        'Data Infrastructure': 2,  # +2 improvement in raw rating
         'Technology Stack': 1,
         'Use Case Portfolio': 2,
-        'Synergy Score': 20 # +20 improvement in synergy score
+        'Synergy Score': 20  # +20 improvement in synergy score
     },
     'Moderate Scenario': {
         'Data Infrastructure': 1,
@@ -653,7 +702,8 @@ scenario_definitions = {
         'Synergy Score': 10
     },
     'Pessimistic Scenario': {
-        'AI Governance': -1, # Decline in governance (e.g., due to mismanagement)
+        # Decline in governance (e.g., due to mismanagement)
+        'AI Governance': -1,
         'Culture': -1,
         'Synergy Score': -10
     }
@@ -673,19 +723,25 @@ st.session_state.scenario_results_df = scenario_results_df
 # FIX: Ensure 'Base Case (Current)' is always first for consistent indexing
 if 'Base Case (Current)' in st.session_state.scenario_results_df['Scenario'].values:
     # If it exists, remove it and re-add at the top to ensure it's always the first row if already present
-    st.session_state.scenario_results_df = st.session_state.scenario_results_df[st.session_state.scenario_results_df['Scenario'] != 'Base Case (Current)']
+    st.session_state.scenario_results_df = st.session_state.scenario_results_df[
+        st.session_state.scenario_results_df['Scenario'] != 'Base Case (Current)']
 
-base_case_row = pd.DataFrame([{'Scenario': 'Base Case (Current)', 'PE Org-AI-R Score': st.session_state.pe_org_ai_r_score}])
-st.session_state.scenario_results_df = pd.concat([base_case_row, st.session_state.scenario_results_df]).reset_index(drop=True)
+base_case_row = pd.DataFrame(
+    [{'Scenario': 'Base Case (Current)', 'PE Org-AI-R Score': st.session_state.pe_org_ai_r_score}])
+st.session_state.scenario_results_df = pd.concat(
+    [base_case_row, st.session_state.scenario_results_df]).reset_index(drop=True)
 
 
 st.markdown("##### PE Org-AI-R Score Under Different Scenarios")
-st.dataframe(st.session_state.scenario_results_df, width='stretch') # FIX: use_container_width -> width
+# FIX: use_container_width -> width
+st.dataframe(st.session_state.scenario_results_df, width='stretch')
 
 # Plot: Scenario Analysis
 fig_scenario, ax_scenario = plt.subplots(figsize=(10, 6))
-sns.barplot(x='Scenario', y='PE Org-AI-R Score', data=st.session_state.scenario_results_df, palette='coolwarm', ax=ax_scenario)
-ax_scenario.set_title(f"PE Org-AI-R Score for {st.session_state.company_name} Under Different Scenarios")
+sns.barplot(x='Scenario', y='PE Org-AI-R Score',
+            data=st.session_state.scenario_results_df, palette='coolwarm', ax=ax_scenario)
+ax_scenario.set_title(
+    f"PE Org-AI-R Score for {st.session_state.company_name} Under Different Scenarios")
 ax_scenario.set_xlabel("Scenario")
 ax_scenario.set_ylabel("PE Org-AI-R Score (0-100)")
 ax_scenario.set_ylim(0, 100)
@@ -708,13 +764,14 @@ those that, when improved, have the most significant impact on **{st.session_sta
 overall `PE Org-AI-R Score`. This `Sensitivity Analysis` will guide our prioritization.
 """)
 
-st.slider( # Removed direct assignment to st.session_state
-    r"Raw Rating Change for Sensitivity Analysis ($\pm$ points)", # FIX: Made label a raw string to avoid SyntaxWarning for \p
+st.slider(  # Removed direct assignment to st.session_state
+    # FIX: Made label a raw string to avoid SyntaxWarning for \p
+    r"Raw Rating Change for Sensitivity Analysis ($\pm$ points)",
     min_value=1,
     max_value=2,
     step=1,
     value=st.session_state.sensitivity_change_delta,
-    key="sensitivity_change_delta" # Key is 'sensitivity_change_delta'
+    key="sensitivity_change_delta"  # Key is 'sensitivity_change_delta'
 )
 st.markdown(f"""
 <small><i>This slider defines the hypothetical improvement (or decline) in raw ratings we test for each dimension.
@@ -732,13 +789,17 @@ sensitivity_df = perform_sensitivity_analysis(
 st.session_state.sensitivity_df = sensitivity_df
 
 st.markdown("##### Sensitivity of PE Org-AI-R to Dimension Changes")
-st.dataframe(st.session_state.sensitivity_df, width='stretch') # FIX: use_container_width -> width
+# FIX: use_container_width -> width
+st.dataframe(st.session_state.sensitivity_df, width='stretch')
 
 # Plot: Sensitivity Analysis
 fig_sens, ax_sens = plt.subplots(figsize=(12, 8))
-colors = ['red' if x < 0 else 'green' for x in st.session_state.sensitivity_df['Impact on PE Org-AI-R']]
-sns.barplot(x='Impact on PE Org-AI-R', y='Dimension Change', data=st.session_state.sensitivity_df, palette=colors, ax=ax_sens)
-ax_sens.set_title(f"Sensitivity of PE Org-AI-R to Changes in {st.session_state.company_name}'s AI Dimensions")
+colors = ['red' if x <
+          0 else 'green' for x in st.session_state.sensitivity_df['Impact on PE Org-AI-R']]
+sns.barplot(x='Impact on PE Org-AI-R', y='Dimension Change',
+            data=st.session_state.sensitivity_df, palette=colors, ax=ax_sens)
+ax_sens.set_title(
+    f"Sensitivity of PE Org-AI-R to Changes in {st.session_state.company_name}'s AI Dimensions")
 ax_sens.set_xlabel("Change in PE Org-AI-R Score")
 ax_sens.set_ylabel("AI Dimension / Synergy Change")
 ax_sens.axvline(0, color='grey', linestyle='--')
@@ -775,31 +836,31 @@ where:
 
 col1_exit, col2_exit, col3_exit = st.columns(3)
 with col1_exit:
-    st.slider( # Removed direct assignment to st.session_state
+    st.slider(  # Removed direct assignment to st.session_state
         "Visible Score (0-100)",
         min_value=0,
         max_value=100,
         step=1,
         value=st.session_state.exit_visible_score,
-        key="exit_visible_score" # Key is 'exit_visible_score'
+        key="exit_visible_score"  # Key is 'exit_visible_score'
     )
 with col2_exit:
-    st.slider( # Removed direct assignment to st.session_state
+    st.slider(  # Removed direct assignment to st.session_state
         "Documented Score (0-100)",
         min_value=0,
         max_value=100,
         step=1,
         value=st.session_state.exit_documented_score,
-        key="exit_documented_score" # Key is 'exit_documented_score'
+        key="exit_documented_score"  # Key is 'exit_documented_score'
     )
 with col3_exit:
-    st.slider( # Removed direct assignment to st.session_state
+    st.slider(  # Removed direct assignment to st.session_state
         "Sustainable Score (0-100)",
         min_value=0,
         max_value=100,
         step=1,
         value=st.session_state.exit_sustainable_score,
-        key="exit_sustainable_score" # Key is 'exit_sustainable_score'
+        key="exit_sustainable_score"  # Key is 'exit_sustainable_score'
     )
 
 exit_ai_r_score = calculate_exit_ai_r(
@@ -821,14 +882,17 @@ exit_component_data = pd.DataFrame({
 
 # Plot: Exit-AI-R Component Scores
 fig_exit, ax_exit = plt.subplots(figsize=(10, 6))
-sns.barplot(x='Component', y='Score', data=exit_component_data, palette='cool', ax=ax_exit)
-ax_exit.set_title(f"Exit-AI-R Component Scores for {st.session_state.company_name}")
+sns.barplot(x='Component', y='Score', data=exit_component_data,
+            palette='cool', ax=ax_exit)
+ax_exit.set_title(
+    f"Exit-AI-R Component Scores for {st.session_state.company_name}")
 ax_exit.set_xlabel("Exit-Readiness Component")
 ax_exit.set_ylabel("Score (0-100)")
 ax_exit.set_ylim(0, 100)
 # Add weight annotations
 for index, row in exit_component_data.iterrows():
-    ax_exit.text(index, row['Score'] + 5, f"Weight: {row['Weight']:.2f}", color='black', ha="center")
+    ax_exit.text(index, row['Score'] + 5,
+                 f"Weight: {row['Weight']:.2f}", color='black', ha="center")
 st.pyplot(fig_exit)
 plt.close(fig_exit)
 
@@ -841,7 +905,6 @@ to enhance the exit narrative and increase valuation.
 st.divider()
 
 st.markdown(f"""
----
 ### Simulation Complete: Actionable Insights for VentureBridge Capital
 
 Congratulations, Alex! You have completed the comprehensive PE-AI readiness simulation for **{st.session_state.company_name}**.
