@@ -1,56 +1,69 @@
 
-```python
-# Section 1: Setup & Imports
-# As a Quantitative Analyst, ensuring a reproducible environment is the first step.
-# This cell installs necessary libraries and imports key modules for data manipulation, calculation, and visualization.
+# Jupyter Notebook Specification: PE Org-AI-R Readiness Simulator
 
-!pip install numpy pandas matplotlib seaborn plotly
+## 1. Setup & Environment
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.graph_objects as go
-import plotly.express as px
+### Markdown Cell — Story + Context + Real-World Relevance
 
-# Set plotting style for consistency
-sns.set_theme(style="whitegrid")
-plt.rcParams['figure.figsize'] = (10, 6)
-```
+**Persona:** Alex, a Quantitative Analyst at VentureBridge Capital, a leading Private Equity (PE) firm.
 
-## Section 2: The PE Professional's Challenge: Quantifying AI Readiness
+"Our firm, VentureBridge Capital, is constantly scouting for promising companies to acquire and grow. A critical part of our due diligence process is assessing a target company's AI readiness – not just if they *have* AI, but if they can truly *leverage* it for value creation and a strong exit. As a Quant Analyst, my role is to provide a structured, quantitative framework for this assessment, helping our Portfolio Managers make informed decisions.
 
-As a Private Equity (PE) professional, you're constantly evaluating new investment opportunities and optimizing existing portfolio companies. In today's landscape, Artificial Intelligence (AI) capability is no longer a luxury but a critical driver of value creation and competitive advantage. However, assessing a company's AI readiness is complex, often relying on qualitative judgment rather than quantitative metrics.
+Today, I'm evaluating 'InnovateCo', a potential target in the Manufacturing sector. I need to calculate its `PE Org-AI-R Score` to understand its current AI maturity and identify key investment gaps. The `PE Org-AI-R Score` is a proprietary metric we use, incorporating both the company's internal capabilities (`IdiosyncraticReadiness`) and the broader market opportunity (`SystematicOpportunity`), along with a `Synergy` factor that captures how well these align.
 
-Your challenge, as a Portfolio Manager or Quantitative Analyst, is to bring structure and data-driven rigor to this assessment. You need a transparent framework to rapidly understand a target company's current AI state, its potential for AI-driven value creation, and to identify specific areas for improvement.
-
-This is where the **PE Org-AI-R Score** comes in. It provides a standardized, parametric framework to systematically evaluate a company's AI readiness by breaking down enterprise AI opportunity into two core components: `Idiosyncratic Readiness` (organization-specific capabilities) and `Systematic Opportunity` (industry-level AI potential), with an additional `Synergy` component capturing the combined benefit.
-
-The core formula for the PE Org-AI-R Score is defined as:
-$$PE Org-AI-R = \alpha \cdot IdiosyncraticReadiness + (1 - \alpha) \cdot SystematicOpportunity + \beta \cdot Synergy$$
+The core formula, based on our internal framework, is:
+$$PE \text{ Org-AI-R} = \alpha \cdot IdiosyncraticReadiness + (1 - \alpha) \cdot SystematicOpportunity + \beta \cdot Synergy$$
 
 Where:
-*   $IdiosyncraticReadiness \in [0, 100]$: This represents the company's internal capabilities across seven critical dimensions (e.g., Data Infrastructure, Talent).
-*   $SystematicOpportunity \in [0, 100]$: This reflects the inherent AI potential and adoption rates within the company's industry sector.
-*   $Synergy \in [0, 100]$: This conceptual score quantifies the combined benefit or alignment between the company's internal readiness and the external market opportunity.
-*   $\alpha \in [0, 1]$: The weighting factor for organizational factors versus market factors. The paper suggests a prior range of $\alpha \in [0.55, 0.70]$, emphasizing the importance of internal capabilities.
-*   $\beta \ge 0$: The synergy coefficient, representing the impact of synergy on the overall score. The paper suggests a prior range of $\beta \in [0.08, 0.25]$.
+*   $IdiosyncraticReadiness$: A score (0-100) reflecting the company's internal AI capabilities across various dimensions.
+*   $SystematicOpportunity$: A score (0-100) representing the industry-level AI potential.
+*   $Synergy$: A score (0-100) reflecting the combined benefit of idiosyncratic readiness and systematic opportunity.
+*   $\alpha \in [0, 1]$: Weight on organizational factors.
+*   $\beta \ge 0$: Synergy coefficient."
 
-By using this framework, you aim to provide a data-backed assessment that directly informs deal evaluation, value creation planning, and ultimately, a compelling exit narrative.
+### Code cell (function definition + function execution)
 
 ```python
-# No code in this section; it serves as an introduction to the problem and the Org-AI-R framework.
+# 1. Install required libraries
+!pip install pandas numpy matplotlib seaborn scipy
+
+# 2. Import the required dependencies
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import math
+from matplotlib.patches import Polygon
+
+# Configure plotting for better aesthetics
+sns.set_theme(style="whitegrid")
+plt.rcParams['figure.figsize'] = (10, 6)
+plt.rcParams['figure.dpi'] = 100
+plt.rcParams['font.size'] = 12
 ```
 
-## Section 3: Defining the AI Readiness Landscape: Industry Benchmarks and Weights
+## 2. Step 1: Define Static Framework Parameters and Sector Data
 
-As a Quantitative Analyst, a consistent and calibrated framework is essential for meaningful comparisons. Before we assess any specific company, we need to define the foundational data: `Systematic Opportunity` scores for different industries, `Idiosyncratic Readiness` dimension weights (both general and sector-specific), and industry benchmark scores (e.g., 75th percentile) for performance comparison.
+### Markdown Cell — Story + Context + Real-World Relevance
 
-This static data reflects insights from industry research, allowing for sector-specific calibration, a key innovation of the PE Org-AI-R framework. For example, 'Data Infrastructure' might be weighted higher in data-intensive sectors like Retail or Healthcare, while 'AI Governance' is paramount in highly regulated industries.
+"Before I can assess 'InnovateCo', I need to load our firm's standardized data. This includes predefined `Systematic Opportunity` scores for each industry, the default weights we use for the seven `Idiosyncratic Readiness` dimensions, and any sector-specific adjustments to these weights. This ensures consistency and comparability across all our assessments.
+
+The seven dimensions of `Idiosyncratic Readiness` are:
+1.  **Data Infrastructure**
+2.  **AI Governance**
+3.  **Technology Stack**
+4.  **Talent**
+5.  **Leadership**
+6.  **Use Case Portfolio**
+7.  **Culture**
+
+These dimensions are crucial as they represent the internal capabilities that determine a company's ability to capture AI value. We also maintain industry benchmark scores (75th percentile) for each dimension, which will be critical for our `Gap Analysis`."
+
+### Code cell (function definition + function execution)
 
 ```python
-# Define systematic opportunity scores for key industries (0-100 scale)
-SO_SCORES = {
+# Define static data structures
+SYSTEMATIC_OPPORTUNITY_SCORES = {
     'Manufacturing': 72,
     'Healthcare': 78,
     'Retail': 75,
@@ -58,14 +71,8 @@ SO_SCORES = {
     'Technology': 85
 }
 
-# Define the seven dimensions of Idiosyncratic Readiness
-dimensions = [
-    'Data Infrastructure', 'AI Governance', 'Technology Stack',
-    'Talent', 'Leadership', 'Use Case Portfolio', 'Culture'
-]
-
-# Define general (default) dimension weights (sum to 1)
-DEFAULT_DIM_WEIGHTS = {
+# Default dimension weights (sum to 1)
+DEFAULT_DIMENSION_WEIGHTS = {
     'Data Infrastructure': 0.25,
     'AI Governance': 0.20,
     'Technology Stack': 0.15,
@@ -75,9 +82,8 @@ DEFAULT_DIM_WEIGHTS = {
     'Culture': 0.05
 }
 
-# Define sector-specific dimension weights (sum to 1 for each sector)
-# Based on Section 4 of the provided paper
-SECTOR_SPECIFIC_WEIGHTS = {
+# Sector-specific dimension weights (sum to 1 for each sector)
+SECTOR_DIMENSION_WEIGHTS = {
     'Manufacturing': {
         'Data Infrastructure': 0.28, 'AI Governance': 0.15, 'Technology Stack': 0.18,
         'Talent': 0.15, 'Leadership': 0.08, 'Use Case Portfolio': 0.12, 'Culture': 0.04
@@ -99,541 +105,515 @@ SECTOR_SPECIFIC_WEIGHTS = {
         'Talent': 0.22, 'Leadership': 0.08, 'Use Case Portfolio': 0.10, 'Culture': 0.03
     }
 }
-# Ensure all sectors have all dimensions; fill with default if not specified
-for sector, weights in SECTOR_SPECIFIC_WEIGHTS.items():
-    for dim in dimensions:
-        if dim not in weights:
-            weights[dim] = DEFAULT_DIM_WEIGHTS[dim]
 
-# Industry benchmark scores (75th percentile) for gap analysis (0-100 scale)
-# Derived from Example 1 (Manufacturing) and plausible values for others.
-BENCHMARK_SCORES = {
-    'Manufacturing': { # Based on Example 1: company_score + gap_to_75th
+# Example Industry Benchmark Scores (75th percentile, 0-100 scale) - Synthetic Data
+INDUSTRY_BENCHMARKS = {
+    'Manufacturing': {
         'Data Infrastructure': 60, 'AI Governance': 55, 'Technology Stack': 60,
         'Talent': 58, 'Leadership': 70, 'Use Case Portfolio': 50, 'Culture': 60
     },
     'Healthcare': {
-        'Data Infrastructure': 70, 'AI Governance': 65, 'Technology Stack': 60,
-        'Talent': 68, 'Leadership': 75, 'Use Case Portfolio': 60, 'Culture': 65
+        'Data Infrastructure': 65, 'AI Governance': 68, 'Technology Stack': 55,
+        'Talent': 62, 'Leadership': 72, 'Use Case Portfolio': 55, 'Culture': 65
     },
     'Retail': {
-        'Data Infrastructure': 65, 'AI Governance': 50, 'Technology Stack': 65,
-        'Talent': 62, 'Leadership': 70, 'Use Case Portfolio': 65, 'Culture': 60
+        'Data Infrastructure': 62, 'AI Governance': 50, 'Technology Stack': 65,
+        'Talent': 55, 'Leadership': 70, 'Use Case Portfolio': 60, 'Culture': 65
     },
     'Business Services': {
         'Data Infrastructure': 68, 'AI Governance': 60, 'Technology Stack': 62,
-        'Talent': 70, 'Leadership': 72, 'Use Case Portfolio': 65, 'Culture': 60
+        'Talent': 65, 'Leadership': 75, 'Use Case Portfolio': 60, 'Culture': 70
     },
     'Technology': {
-        'Data Infrastructure': 75, 'AI Governance': 65, 'Technology Stack': 75,
-        'Talent': 78, 'Leadership': 80, 'Use Case Portfolio': 70, 'Culture': 70
+        'Data Infrastructure': 75, 'AI Governance': 65, 'Technology Stack': 78,
+        'Talent': 70, 'Leadership': 70, 'Use Case Portfolio': 68, 'Culture': 75
     }
 }
-
-print("Systematic Opportunity Scores:")
-display(pd.DataFrame.from_dict(SO_SCORES, orient='index', columns=['Score']))
-
-print("\nDefault Dimension Weights:")
-display(pd.DataFrame.from_dict(DEFAULT_DIM_WEIGHTS, orient='index', columns=['Weight']))
-
-print("\nSector-Specific Dimension Weights (first 2 industries shown):")
-display(pd.DataFrame(SECTOR_SPECIFIC_WEIGHTS).T.head(2))
-
-print("\nIndustry Benchmark Scores (first 2 industries shown):")
-display(pd.DataFrame(BENCHMARK_SCORES).T.head(2))
+print("Framework parameters and sector data loaded.")
 ```
 
-## Section 4: Quantifying Idiosyncratic Readiness: Converting Subjective Assessments to Actionable Scores
+## 3. Step 2: Collect Raw Idiosyncratic Readiness Ratings
 
-As a Quantitative Analyst, a crucial step in assessing a target company is to standardize subjective input. The 'Idiosyncratic Readiness' component of the Org-AI-R score is built upon qualitative assessments (e.g., from management interviews) rated on a 1-5 scale for each of the seven dimensions. We need to convert these raw ratings into a normalized 0-100 index to make them comparable and suitable for weighted aggregation.
+### Markdown Cell — Story + Context + Real-World Relevance
 
-The normalization function maps a raw score of 1 to 0 and a score of 5 to 100, linearly scaling the intermediate values.
-The formula for converting a 1-5 rating to a 0-100 normalized score is:
-$$Normalized Score = \left( \frac{\text{Raw Rating} - 1}{4} \right) \times 100$$
-For example, a raw rating of 3 would be converted to $ (3-1)/4 \times 100 = 50 $.
+"Now, it's time to gather the raw data for 'InnovateCo'. Our team has conducted interviews and assessments across various departments, gathering qualitative input on the company's capabilities. This input is then translated into a 1-5 rating for each of the seven `Idiosyncratic Readiness` dimensions. A rating of 1 indicates a nascent or non-existent capability, while a 5 signifies a highly mature and effective one.
 
-The overall `IdiosyncraticReadiness` score is then calculated as a weighted average of these normalized dimension scores, using sector-specific weights to reflect the industry's strategic priorities.
-$$IdiosyncraticReadiness = \sum_{k=1}^{7} w_k \cdot Normalized\_Score_k$$
-where $\text{Normalized\_Score}_k$ is the 0-100 score for dimension $k$, and $w_k$ is the sector-specific weight for dimension $k$.
+For 'InnovateCo', which operates in the Manufacturing sector, I'll input these preliminary ratings. These ratings directly reflect the company's current internal state and form the bedrock of our `IdiosyncraticReadiness` score."
 
-Let's simulate the assessment of a hypothetical target company, **"InnovateCo"**, which operates in the **Manufacturing** sector.
+### Code cell (function definition + function execution)
 
 ```python
-def normalize_rating(rating: int) -> float:
-    """
-    Converts a raw behavioral rating (1-5 scale) to a 0-100 index.
-    A rating of 1 maps to 0, 5 maps to 100.
-    """
-    if not (1 <= rating <= 5):
-        raise ValueError("Rating must be between 1 and 5.")
-    return ((rating - 1) / 4) * 100
+# User-defined inputs for 'InnovateCo'
+company_name = "InnovateCo"
+company_industry = "Manufacturing"
 
-def calculate_idiosyncratic_readiness(dimension_ratings: dict, industry: str) -> tuple[float, dict]:
-    """
-    Calculates the Idiosyncratic Readiness score for a company.
-
-    Args:
-        dimension_ratings (dict): A dictionary of raw 1-5 ratings for each dimension.
-                                  Example: {'Data Infrastructure': 3, 'AI Governance': 4, ...}
-        industry (str): The industry of the target company.
-
-    Returns:
-        tuple[float, dict]: The overall Idiosyncratic Readiness score (0-100) and
-                           a dictionary of normalized 0-100 scores for each dimension.
-    """
-    weights = SECTOR_SPECIFIC_WEIGHTS.get(industry, DEFAULT_DIM_WEIGHTS)
-
-    normalized_scores = {
-        dim: normalize_rating(rating)
-        for dim, rating in dimension_ratings.items()
-    }
-
-    idiosyncratic_readiness = sum(
-        normalized_scores[dim] * weights.get(dim, 0)
-        for dim in dimensions
-    )
-    return idiosyncratic_readiness, normalized_scores
-
-# --- Example for InnovateCo (Manufacturing Sector) ---
-target_industry = 'Manufacturing'
-innovate_co_raw_ratings = {
-    'Data Infrastructure': 3,      # Average
-    'AI Governance': 2,            # Below average, potentially weak
-    'Technology Stack': 3,         # Average
-    'Talent': 2,                   # Below average, talent gap
-    'Leadership': 4,               # Strong leadership vision
-    'Use Case Portfolio': 1,       # No significant AI use cases
-    'Culture': 3                   # Average
+# Raw dimension ratings (1-5 scale) for 'InnovateCo'
+# These would typically come from due diligence interviews and assessments.
+raw_dimension_ratings = {
+    'Data Infrastructure': 2,       # Needs significant improvement
+    'AI Governance': 1,             # Very early stage, almost non-existent
+    'Technology Stack': 3,          # Moderate, some modern elements but also legacy
+    'Talent': 2,                    # Limited AI/ML talent
+    'Leadership': 3,                # Aware of AI but not strong vision
+    'Use Case Portfolio': 1,        # No proven AI use cases in production
+    'Culture': 2                    # Not yet data-driven or innovation-oriented
 }
 
-innovate_co_idiosyncratic_readiness, innovate_co_normalized_dim_scores = \
-    calculate_idiosyncratic_readiness(innovate_co_raw_ratings, target_industry)
-
-print(f"Company: InnovateCo, Industry: {target_industry}")
-print(f"Normalized Dimension Scores (0-100):")
-for dim, score in innovate_co_normalized_dim_scores.items():
-    print(f"  {dim}: {score:.2f}")
-
-print(f"\nCalculated Idiosyncratic Readiness Score for InnovateCo: {innovate_co_idiosyncratic_readiness:.2f}")
+print(f"Raw ratings collected for {company_name} in the {company_industry} sector.")
+print(raw_dimension_ratings)
 ```
 
-The `IdiosyncraticReadiness` score for InnovateCo is **41.00**. This score, while above zero, suggests that InnovateCo has significant room for improvement in its internal AI capabilities. Breaking down the normalized dimension scores reveals specific areas: for instance, 'Use Case Portfolio' is 0.00, indicating a complete lack of deployed AI initiatives, and 'AI Governance' and 'Talent' are also low at 25.00, pointing to foundational weaknesses. Conversely, 'Leadership' at 75.00 is a relative strength. This granular view is invaluable for identifying actionable intervention points during the due diligence process.
+## 4. Step 3: Calculate Normalized Idiosyncratic Readiness
 
-## Section 5: Calculating the Comprehensive PE Org-AI-R Score
+### Markdown Cell — Story + Context + Real-World Relevance
 
-Now that we have quantified the `IdiosyncraticReadiness`, the next step is to compute the full `PE Org-AI-R` score. This is the ultimate metric for assessing InnovateCo's overall AI potential and current capabilities, informing our investment thesis.
+"With the raw ratings in hand, my next step is to convert these qualitative 1-5 scores into a standardized 0-100 index for each dimension. This normalization allows for quantitative comparison and aggregation. Furthermore, for 'InnovateCo' in the Manufacturing sector, I need to apply our sector-specific dimension weights. This is crucial because, for example, 'Data Infrastructure' and 'Technology Stack' might carry more weight in a manufacturing context (due to IoT/sensor data and OT/IT integration) than in a business services firm.
 
-The calculation combines the company's internal capabilities (`IdiosyncraticReadiness`), the industry's inherent AI opportunity (`SystematicOpportunity`), and a `Synergy` factor, all weighted by the parameters $\alpha$ and $\beta$.
+The aggregated `IdiosyncraticReadiness` score (0-100) is calculated using the following weighted sum, where each raw rating is first scaled from 1-5 to a 20-100 range:
+$$ IdiosyncraticReadiness = \frac{\sum_{i=1}^{7} w_i \cdot \text{Rating}_i}{5} \times 100 $$
+Here, $\text{Rating}_i$ is the raw 1-5 score for dimension $i$, and $w_i$ is the sector-specific weight for that dimension. This formula effectively scales the weighted average of the 1-5 ratings to a 0-100 scale, reflecting the overall internal capability."
 
-As a Portfolio Manager, adjusting $\alpha$ and $\beta$ allows you to calibrate the framework to reflect your firm's investment philosophy. For example, a higher $\alpha$ emphasizes internal capabilities, while a higher $\beta$ assigns more importance to the interplay between internal strengths and external opportunities. We will use the prior ranges from the paper ($\alpha \in [0.55, 0.70]$ and $\beta \in [0.08, 0.25]$) for our typical analysis. For InnovateCo, we'll assume an initial synergy score based on preliminary assessments.
+### Code cell (function definition + function execution)
 
-$$PE Org-AI-R = \alpha \cdot IdiosyncraticReadiness + (1 - \alpha) \cdot SystematicOpportunity + \beta \cdot Synergy$$
+```python
+def calculate_idiosyncratic_readiness(raw_ratings: dict, industry: str) -> dict:
+    """
+    Calculates the overall Idiosyncratic Readiness score (0-100) and individual
+    normalized dimension scores for a company based on raw 1-5 ratings and
+    sector-specific weights.
+
+    Args:
+        raw_ratings (dict): A dictionary of raw 1-5 ratings for the seven dimensions.
+        industry (str): The industry sector of the company.
+
+    Returns:
+        dict: A dictionary containing:
+              - 'overall_score': The aggregated Idiosyncratic Readiness score (0-100).
+              - 'dimension_scores': A dictionary of individual dimension scores (0-100).
+              - 'weights': The weights used for calculation.
+    """
+    # Get sector-specific weights, default to general if sector not found
+    weights = SECTOR_DIMENSION_WEIGHTS.get(industry, DEFAULT_DIMENSION_WEIGHTS)
+
+    # Calculate individual scaled dimension scores (1-5 -> 20-100, effectively)
+    scaled_dimension_scores = {
+        dim: (raw_score / 5) * 100 for dim, raw_score in raw_ratings.items()
+    }
+
+    # Calculate the weighted sum for overall IdiosyncraticReadiness using the paper's formula interpretation
+    # D_k = (sum(w_i * Rating_i,k) / 5) * 100
+    weighted_sum_raw_ratings = sum(
+        weights[dim] * raw_ratings[dim] for dim in raw_ratings
+    )
+    overall_idiosyncratic_readiness = (weighted_sum_raw_ratings / 5) * 100
+
+    return {
+        'overall_score': overall_idiosyncratic_readiness,
+        'dimension_scores': scaled_dimension_scores,
+        'weights': weights
+    }
+
+# Execute the function for InnovateCo
+idiosyncratic_readiness_results = calculate_idiosyncratic_readiness(raw_dimension_ratings, company_industry)
+innovateco_idiosyncratic_readiness = idiosyncratic_readiness_results['overall_score']
+innovateco_dimension_scores = idiosyncratic_readiness_results['dimension_scores']
+innovateco_dimension_weights = idiosyncratic_readiness_results['weights']
+
+print(f"{company_name}'s Overall Idiosyncratic Readiness Score: {innovateco_idiosyncratic_readiness:.2f}")
+print("\nIndividual Dimension Scores (0-100 scale):")
+for dim, score in innovateco_dimension_scores.items():
+    print(f"- {dim}: {score:.2f}")
+
+# Visualization: Bar chart of Idiosyncratic Readiness dimensions
+fig, ax = plt.subplots(figsize=(12, 7))
+sns.barplot(x=list(innovateco_dimension_scores.keys()), y=list(innovateco_dimension_scores.values()), palette="viridis", ax=ax)
+ax.set_title(f'{company_name} - Idiosyncratic Readiness Dimension Scores (0-100)', fontsize=16)
+ax.set_ylabel('Score (0-100)', fontsize=12)
+ax.set_xlabel('AI Readiness Dimension', fontsize=12)
+plt.ylim(0, 100)
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+```
+
+### Markdown cell (explanation of execution)
+
+"The bar chart visually represents 'InnovateCo's' strengths and weaknesses across the seven `Idiosyncratic Readiness` dimensions. A score of 20 (from a raw rating of 1) indicates a critical gap, while a 60 (from a raw rating of 3) suggests a moderate capability. For 'InnovateCo', the low scores in `AI Governance`, `Use Case Portfolio`, and `Culture` immediately highlight areas requiring significant attention. `Data Infrastructure` and `Talent` are also major concerns. This granular view helps us pinpoint exactly where the company needs to build foundational AI capabilities, rather than just knowing its overall readiness."
+
+## 5. Step 4: Compute the Overall PE Org-AI-R Score
+
+### Markdown Cell — Story + Context + Real-World Relevance
+
+"Now, it's time to calculate the final `PE Org-AI-R Score` for 'InnovateCo'. This combines the company's specific capabilities (`IdiosyncraticReadiness`) with the broader market potential for AI in its sector (`SystematicOpportunity`), and a `Synergy` factor.
+
+I also have the flexibility to adjust the framework parameters $\alpha$ (weight on organizational factors) and $\beta$ (synergy coefficient). For our initial assessment, I'll use our standard default values: $\alpha = 0.6$ (giving more weight to a company's internal capabilities, as this is often more actionable for value creation) and $\beta = 0.15$ (acknowledging that synergy between internal readiness and market opportunity contributes to the overall score). The `Synergy` score is typically estimated conceptually during due diligence, reflecting the perceived alignment and amplification potential. For 'InnovateCo', our analysts have estimated a `Synergy` score of 50 out of 100, reflecting moderate alignment between its current (low) readiness and the market opportunity.
+
+The formula for the overall `PE Org-AI-R Score` is:
+$$PE \text{ Org-AI-R} = \alpha \cdot IdiosyncraticReadiness + (1 - \alpha) \cdot SystematicOpportunity + \beta \cdot Synergy$$"
+
+### Code cell (function definition + function execution)
 
 ```python
 def calculate_pe_org_ai_r(
     idiosyncratic_readiness: float,
     systematic_opportunity: float,
-    synergy_score: float,
-    alpha: float = 0.65,  # Default alpha based on paper's prior range [0.55, 0.70]
-    beta: float = 0.15    # Default beta based on paper's prior range [0.08, 0.25]
+    synergy: float,
+    alpha: float = 0.6,
+    beta: float = 0.15
 ) -> float:
     """
-    Calculates the overall PE Org-AI-R Score for a company.
+    Calculates the Private Equity Organizational AI-Readiness (PE Org-AI-R) Score.
 
     Args:
-        idiosyncratic_readiness (float): The company's Idiosyncratic Readiness score (0-100).
-        systematic_opportunity (float): The industry's Systematic Opportunity score (0-100).
-        synergy_score (float): A conceptual score (0-100) representing synergy.
-        alpha (float): Weight on organizational factors (IdiosyncraticReadiness).
-        beta (float): Synergy coefficient.
+        idiosyncratic_readiness (float): Company-specific AI capabilities (0-100).
+        systematic_opportunity (float): Industry-level AI potential (0-100).
+        synergy (float): Combined benefit of readiness and opportunity (0-100).
+        alpha (float): Weight on organizational factors (0 to 1). Default 0.6.
+        beta (float): Synergy coefficient (>= 0). Default 0.15.
 
     Returns:
-        float: The final PE Org-AI-R Score.
+        float: The calculated PE Org-AI-R Score (0-100).
     """
     if not (0 <= alpha <= 1):
-        raise ValueError("Alpha must be between 0 and 1.")
-    if not (beta >= 0):
-        raise ValueError("Beta must be non-negative.")
+        raise ValueError("Alpha (α) must be between 0 and 1.")
+    if beta < 0:
+        raise ValueError("Beta (β) must be non-negative.")
 
-    org_ai_r_score = (alpha * idiosyncratic_readiness) + \
-                     ((1 - alpha) * systematic_opportunity) + \
-                     (beta * synergy_score)
-    return org_ai_r_score
+    pe_org_ai_r = (alpha * idiosyncratic_readiness) + \
+                  ((1 - alpha) * systematic_opportunity) + \
+                  (beta * synergy)
+    return pe_org_ai_r
 
-# --- Example for InnovateCo (Manufacturing Sector) ---
-# Retrieve Systematic Opportunity for InnovateCo's industry
-innovate_co_systematic_opportunity = SO_SCORES[target_industry]
+# Get Systematic Opportunity for InnovateCo's industry
+innovateco_systematic_opportunity = SYSTEMATIC_OPPORTUNITY_SCORES.get(company_industry)
 
-# Assume a preliminary synergy score for InnovateCo (0-100)
-# A synergy score reflects how well internal readiness aligns with market opportunity.
-# For InnovateCo, with low Use Case Portfolio, synergy might be moderate.
-innovate_co_synergy_score = 50
+# User-defined framework parameters and Synergy
+alpha_param = 0.6   # Weight on organizational factors (prior: alpha in [0.55, 0.70])
+beta_param = 0.15   # Synergy coefficient (prior: beta in [0.08, 0.25])
+synergy_score = 50  # Conceptual score for InnovateCo (0-100)
 
-# Define framework parameters (can be adjusted by the user)
-alpha_param = 0.65
-beta_param = 0.15
-
-innovate_co_org_ai_r_score = calculate_pe_org_ai_r(
-    innovate_co_idiosyncratic_readiness,
-    innovate_co_systematic_opportunity,
-    innovate_co_synergy_score,
+# Execute the function to calculate PE Org-AI-R
+innovateco_org_ai_r_score = calculate_pe_org_ai_r(
+    innovateco_idiosyncratic_readiness,
+    innovateco_systematic_opportunity,
+    synergy_score,
     alpha=alpha_param,
     beta=beta_param
 )
 
-print(f"--- InnovateCo PE Org-AI-R Score Calculation ---")
-print(f"Idiosyncratic Readiness: {innovate_co_idiosyncratic_readiness:.2f}")
-print(f"Systematic Opportunity (from {target_industry} industry): {innovate_co_systematic_opportunity:.2f}")
-print(f"Synergy Score: {innovate_co_synergy_score:.2f}")
-print(f"Alpha (weight for Idiosyncratic Readiness): {alpha_param:.2f}")
-print(f"Beta (Synergy coefficient): {beta_param:.2f}")
-print(f"\nFinal PE Org-AI-R Score for InnovateCo: {innovate_co_org_ai_r_score:.2f}")
+print(f"\n--- {company_name} PE Org-AI-R Score Calculation ---")
+print(f"Idiosyncratic Readiness: {innovateco_idiosyncratic_readiness:.2f}")
+print(f"Systematic Opportunity ({company_industry}): {innovateco_systematic_opportunity}")
+print(f"Synergy Score: {synergy_score}")
+print(f"Alpha (α): {alpha_param}")
+print(f"Beta (β): {beta_param}")
+print(f"\nFinal {company_name} PE Org-AI-R Score: {innovateco_org_ai_r_score:.2f}")
 ```
 
-## The Final PE Org-AI-R Score for InnovateCo is **62.90**.
+### Markdown cell (explanation of execution)
 
-This score provides an overall quantitative assessment. For a Portfolio Manager, a score of 62.90 in the Manufacturing sector suggests a company with moderate AI readiness, indicating a "transformation opportunity." The blend of a relatively strong industry opportunity (72) and a moderate synergy (50) somewhat compensates for the lower idiosyncratic readiness (41.00). This score is a valuable benchmark, but its true utility comes from understanding the underlying drivers and comparing it against peers, which we will do in the next sections. It flags InnovateCo as a candidate where targeted AI investments could yield substantial returns, requiring a deeper dive into its specific strengths and weaknesses.
+"The calculated `PE Org-AI-R Score` of ~49 for 'InnovateCo' confirms our initial concerns. A score below 60 typically indicates a company with significant AI readiness gaps, suggesting a 'transformation opportunity' rather than a 'strong AI candidate' (referencing our internal screening matrix). This quantitative score provides a clear benchmark and will guide our discussions with the deal team, indicating that substantial investment in foundational AI capabilities will be required if we proceed with this acquisition. This is a critical input for our preliminary screening and deal prioritization."
 
-## Section 6: Visualizing Readiness and Identifying Gaps
+## 6. Step 5: Perform Gap Analysis Against Industry Benchmarks
 
-As a PE professional, a single score is rarely enough. You need to quickly grasp the *composition* of a company's AI readiness and identify specific areas where it underperforms its industry peers. This section uses visualizations to break down InnovateCo's `Idiosyncratic Readiness` by dimension and perform a `Gap Analysis` against the 75th percentile industry benchmarks. This highlights the most critical areas for AI-driven value creation and strategic investment.
+### Markdown Cell — Story + Context + Real-World Relevance
 
-The gap for each dimension $k$ is calculated as:
-$$Gap_k = \text{Industry Benchmark Score}_k - \text{Company Normalized Score}_k$$
-A positive $Gap_k$ means InnovateCo is lagging behind its industry's top quartile in that dimension, indicating a priority area for improvement.
+"Understanding 'InnovateCo's' absolute scores is important, but to truly identify actionable areas for improvement, I need to compare its dimension scores against our internal industry benchmarks. These benchmarks represent the 75th percentile of AI maturity for companies in the Manufacturing sector, giving us a realistic target.
+
+A 'Gap Analysis' will highlight where 'InnovateCo' significantly lags behind its peers, quantifying the difference. This analysis is crucial for developing a focused 100-day plan post-acquisition, ensuring our value creation initiatives are targeted and impactful. We calculate the gap for each dimension as:
+$$Gap_k = D_k^{benchmark} - D_k^{current}$$
+Where $D_k^{benchmark}$ is the industry benchmark score for dimension $k$, and $D_k^{current}$ is 'InnovateCo's' current score for dimension $k$. A larger positive gap indicates a higher priority area for investment."
+
+### Code cell (function definition + function execution)
 
 ```python
-def plot_readiness_and_gaps(company_normalized_scores: dict, industry: str):
+def perform_gap_analysis(company_dimension_scores: dict, industry_benchmarks: dict) -> pd.DataFrame:
     """
-    Generates a radar chart for Idiosyncratic Readiness breakdown and a bar chart for Gap Analysis.
+    Performs a gap analysis comparing company dimension scores against industry benchmarks.
 
     Args:
-        company_normalized_scores (dict): Dictionary of normalized 0-100 scores for each dimension.
-        industry (str): The industry of the target company.
+        company_dimension_scores (dict): Dictionary of company's dimension scores (0-100).
+        industry_benchmarks (dict): Dictionary of industry benchmark scores (0-100).
+
+    Returns:
+        pd.DataFrame: A DataFrame showing company score, benchmark, and the gap.
     """
-    benchmark_scores = BENCHMARK_SCORES.get(industry, {})
+    gap_data = []
+    for dim, score in company_dimension_scores.items():
+        benchmark = industry_benchmarks.get(dim, 0) # Get benchmark, default to 0 if not found
+        gap = benchmark - score
+        priority = "High" if gap >= 15 else ("Medium" if gap >= 5 else "Low")
+        gap_data.append({'Dimension': dim, 'Company Score': score, 'Benchmark (75th %ile)': benchmark, 'Gap': gap, 'Priority': priority})
+    return pd.DataFrame(gap_data).sort_values(by='Gap', ascending=False)
 
-    # Convert to DataFrame for easier plotting
-    df_scores = pd.DataFrame({
-        'Dimension': list(company_normalized_scores.keys()),
-        'Company Score': list(company_normalized_scores.values()),
-        'Benchmark Score': [benchmark_scores.get(dim, 0) for dim in company_normalized_scores.keys()]
-    })
+# Get industry benchmarks for InnovateCo
+innovateco_benchmarks = INDUSTRY_BENCHMARKS.get(company_industry)
 
-    # Calculate Gaps
-    df_scores['Gap to Benchmark'] = df_scores['Benchmark Score'] - df_scores['Company Score']
-    df_scores['Gap to Benchmark'] = df_scores['Gap to Benchmark'].apply(lambda x: max(0, x)) # Only show positive gaps
+# Create a DataFrame for individual scaled dimension scores for easier processing
+innovateco_individual_scaled_scores = pd.Series(innovateco_dimension_scores)
 
-    # --- Radar Chart for Idiosyncratic Readiness Breakdown ---
-    fig_radar = go.Figure()
-    fig_radar.add_trace(go.Scatterpolar(
-        r=df_scores['Company Score'],
-        theta=df_scores['Dimension'],
-        fill='toself',
-        name='InnovateCo Score',
-        line_color='blue'
-    ))
-    fig_radar.add_trace(go.Scatterpolar(
-        r=df_scores['Benchmark Score'],
-        theta=df_scores['Dimension'],
-        fill='none',
-        name=f'{industry} 75th Percentile Benchmark',
-        line_color='red',
-        line_dash='dash'
-    ))
-    fig_radar.update_layout(
-        polar=dict(
-            radialaxis=dict(visible=True, range=[0, 100], showticklabels=False), # Hide radial labels for cleaner look
-            angularaxis=dict(
-                tickvals=df_scores['Dimension'],
-                ticktext=[f"{dim}<br>{score:.0f}/{benchmark:.0f}" for dim, score, benchmark in zip(df_scores['Dimension'], df_scores['Company Score'], df_scores['Benchmark Score'])],
-                direction='clockwise'
-            )
-        ),
-        title_text=f'Idiosyncratic Readiness Breakdown & Benchmark Comparison ({industry})',
-        title_x=0.5,
-        height=600
-    )
-    fig_radar.show()
+# Perform gap analysis
+gap_analysis_df = perform_gap_analysis(innovateco_individual_scaled_scores.to_dict(), innovateco_benchmarks)
 
-    # --- Grouped Bar Chart for Gap Analysis ---
-    df_gaps_sorted = df_scores.sort_values(by='Gap to Benchmark', ascending=False)
-    fig_gap = px.bar(
-        df_gaps_sorted,
-        x='Dimension',
-        y='Gap to Benchmark',
-        color='Gap to Benchmark',
-        color_continuous_scale=px.colors.sequential.Reds,
-        title=f'AI Readiness Gap Analysis for InnovateCo vs. {industry} Benchmark (75th Percentile)',
-        labels={'Gap to Benchmark': 'Score Difference (Benchmark - Company)', 'Dimension': 'AI Readiness Dimension'},
-        height=500
-    )
-    fig_gap.update_layout(xaxis={'categoryorder':'total descending'})
-    fig_gap.show()
+print(f"\n--- {company_name} - Gap Analysis vs. {company_industry} Benchmarks ---")
+print(gap_analysis_df)
 
+# Visualization: Comparative Bar Chart and Gap Analysis Bar Chart
+fig, axes = plt.subplots(1, 2, figsize=(18, 7), sharey=True)
 
-# --- Execution for InnovateCo ---
-plot_readiness_and_gaps(innovate_co_normalized_dim_scores, target_industry)
+# Comparative Chart
+gap_analysis_df.set_index('Dimension')[['Company Score', 'Benchmark (75th %ile)']].plot(
+    kind='bar', ax=axes[0], colormap='Paired'
+)
+axes[0].set_title(f'{company_name} vs. {company_industry} Benchmarks', fontsize=16)
+axes[0].set_ylabel('Score (0-100)', fontsize=12)
+axes[0].set_xlabel('AI Readiness Dimension', fontsize=12)
+axes[0].tick_params(axis='x', rotation=45, ha='right')
+axes[0].set_ylim(0, 100)
+
+# Gap Analysis Chart
+sns.barplot(x='Dimension', y='Gap', data=gap_analysis_df, hue='Priority', palette='RdYlGn_r', dodge=False, ax=axes[1])
+axes[1].set_title(f'{company_name} - AI Readiness Gaps', fontsize=16)
+axes[1].set_ylabel('Gap (Benchmark - Company Score)', fontsize=12)
+axes[1].set_xlabel('AI Readiness Dimension', fontsize=12)
+axes[1].tick_params(axis='x', rotation=45, ha='right')
+plt.ylim(0, max(gap_analysis_df['Gap'].max() + 5, 20)) # Ensure positive y-axis for gaps
+
+plt.tight_layout()
+plt.show()
 ```
 
-The visualizations clearly illustrate InnovateCo's AI readiness profile. The **radar chart** provides a holistic view, showing that InnovateCo (blue area) generally underperforms the Manufacturing 75th percentile benchmark (red dashed line) across most dimensions, notably in 'Use Case Portfolio', 'AI Governance', and 'Talent'.
+### Markdown cell (explanation of execution)
 
-The **gap analysis bar chart** explicitly quantifies these deficits. The largest gaps are in:
-1.  **Use Case Portfolio (Gap: 50.00):** This is the most critical area, indicating no documented AI use cases, a significant missed opportunity compared to industry leaders.
-2.  **AI Governance (Gap: 30.00):** A substantial gap suggests immature AI governance practices, posing risks and limiting scaling potential.
-3.  **Talent (Gap: 33.00):** A notable deficit in AI talent, hindering internal development and implementation.
-4.  **Data Infrastructure (Gap: 25.00):** While not the largest gap, a foundational weakness here can impede all other AI initiatives.
+"The gap analysis clearly shows 'InnovateCo's' most pressing areas for AI investment. Dimensions like 'AI Governance', 'Use Case Portfolio', and 'Talent' have the largest gaps compared to industry leaders, indicating these should be top priorities in any value creation plan. These insights are invaluable for the Portfolio Manager to allocate resources effectively and develop a roadmap that directly addresses critical shortcomings. This data-driven identification of gaps transitions AI from an abstract concept to a measurable, actionable lever for value creation."
 
-For the Portfolio Manager, these insights are actionable. The large gaps in 'Use Case Portfolio', 'AI Governance', and 'Talent' immediately signal priority areas for investment and operational focus to enhance InnovateCo's AI maturity and drive value creation. This moves beyond a single score to a strategic roadmap for improvement.
+## 7. Step 6: Conduct Scenario Analysis for Strategic Planning
 
-## Section 7: Scenario Analysis: Exploring Potential Futures
+### Markdown Cell — Story + Context + Real-World Relevance
 
-As a Quantitative Analyst, you understand that a single point estimate of AI readiness can be misleading. Deal evaluation and value creation planning require understanding the range of possible outcomes. Scenario analysis allows us to model how the overall `Org-AI-R Score` would change under different input assumptions for `Idiosyncratic Readiness` dimensions – specifically, best-case, base-case, and worst-case scenarios.
+"A single `Org-AI-R Score` is a snapshot. To advise the Portfolio Manager effectively, I need to understand 'InnovateCo's' potential `Org-AI-R` trajectory under different investment scenarios. I'll simulate best-case, base-case, and worst-case improvements in the `Idiosyncratic Readiness` dimensions. This helps us quantify the potential upside and downside risk, informing investment decisions and setting realistic improvement targets.
 
-This capability helps you:
-*   **Assess Risk:** Quantify the downside risk if AI initiatives falter.
-*   **Identify Upside:** Estimate the potential improvement in `Org-AI-R` with successful interventions.
-*   **Stress Test Assumptions:** Understand the impact of varying inputs on the overall score.
+For example, a 'best-case' scenario might assume aggressive improvements in foundational areas, while a 'worst-case' might reflect minimal progress due to unforeseen challenges. This `Scenario Analysis` directly addresses the PE firm's 'buy-improve-sell' model, focusing on the improvement trajectory ($\Delta \text{Org-AI-R}$)."
 
-We will simulate three scenarios for InnovateCo:
-*   **Worst-Case:** Each raw dimension rating (1-5) decreases by 1 point (min 1).
-*   **Base-Case:** Current raw dimension ratings.
-*   **Best-Case:** Each raw dimension rating (1-5) increases by 1 point (max 5).
-
-The other parameters (`Systematic Opportunity`, `Synergy`, $\alpha$, $\beta$) will remain constant for this analysis to isolate the impact of `Idiosyncratic Readiness` changes.
+### Code cell (function definition + function execution)
 
 ```python
 def run_scenario_analysis(
     base_raw_ratings: dict,
     industry: str,
-    synergy_score: float,
     alpha: float,
     beta: float,
-    rating_delta: int = 1
+    synergy: float,
+    scenarios: dict
 ) -> pd.DataFrame:
     """
-    Calculates PE Org-AI-R scores for worst-case, base-case, and best-case scenarios.
+    Runs scenario analysis for PE Org-AI-R score based on different
+    assumptions for dimension ratings.
 
     Args:
-        base_raw_ratings (dict): The current raw 1-5 ratings for each dimension.
-        industry (str): The industry of the target company.
-        synergy_score (float): The conceptual synergy score (0-100).
+        base_raw_ratings (dict): Dictionary of base raw 1-5 ratings.
+        industry (str): The industry sector.
         alpha (float): Weight on organizational factors.
         beta (float): Synergy coefficient.
-        rating_delta (int): The amount to decrease/increase raw ratings for worst/best case.
+        synergy (float): Base synergy score.
+        scenarios (dict): A dictionary where keys are scenario names (e.g., 'Best Case')
+                          and values are dictionaries of dimension-specific raw rating adjustments.
+                          Adjustments can be absolute ratings or deltas.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the Org-AI-R score for each scenario.
+        pd.DataFrame: A DataFrame with Org-AI-R scores for each scenario.
     """
-    scenarios = {}
+    results = []
+    base_idiosyncratic_results = calculate_idiosyncratic_readiness(base_raw_ratings, industry)
+    base_idiosyncratic_score = base_idiosyncratic_results['overall_score']
+    systematic_opportunity = SYSTEMATIC_OPPORTUNITY_SCORES.get(industry)
 
-    # Base-Case
-    base_idiosyncratic_readiness, _ = calculate_idiosyncratic_readiness(base_raw_ratings, industry)
     base_org_ai_r = calculate_pe_org_ai_r(
-        base_idiosyncratic_readiness, SO_SCORES[industry], synergy_score, alpha, beta
+        base_idiosyncratic_score, systematic_opportunity, synergy, alpha, beta
     )
-    scenarios['Base-Case'] = {'Idiosyncratic Readiness': base_idiosyncratic_readiness, 'Org-AI-R Score': base_org_ai_r}
+    results.append({
+        'Scenario': 'Base Case (Current)',
+        'Idiosyncratic Readiness': base_idiosyncratic_score,
+        'PE Org-AI-R Score': base_org_ai_r
+    })
 
-    # Worst-Case
-    worst_raw_ratings = {dim: max(1, rating - rating_delta) for dim, rating in base_raw_ratings.items()}
-    worst_idiosyncratic_readiness, _ = calculate_idiosyncratic_readiness(worst_raw_ratings, industry)
-    worst_org_ai_r = calculate_pe_org_ai_r(
-        worst_idiosyncratic_readiness, SO_SCORES[industry], synergy_score, alpha, beta
-    )
-    scenarios['Worst-Case'] = {'Idiosyncratic Readiness': worst_idiosyncratic_readiness, 'Org-AI-R Score': worst_org_ai_r}
+    for scenario_name, adjustments in scenarios.items():
+        scenario_ratings = base_raw_ratings.copy()
+        for dim, adj_value in adjustments.items():
+            scenario_ratings[dim] = min(5, max(1, scenario_ratings[dim] + adj_value)) # Apply adjustments (clamp 1-5)
 
+        scenario_idiosyncratic_results = calculate_idiosyncratic_readiness(scenario_ratings, industry)
+        scenario_idiosyncratic_score = scenario_idiosyncratic_results['overall_score']
 
-    # Best-Case
-    best_raw_ratings = {dim: min(5, rating + rating_delta) for dim, rating in base_raw_ratings.items()}
-    best_idiosyncratic_readiness, _ = calculate_idiosyncratic_readiness(best_raw_ratings, industry)
-    best_org_ai_r = calculate_pe_org_ai_r(
-        best_idiosyncratic_readiness, SO_SCORES[industry], synergy_score, alpha, beta
-    )
-    scenarios['Best-Case'] = {'Idiosyncratic Readiness': best_idiosyncratic_readiness, 'Org-AI-R Score': best_org_ai_r}
+        scenario_org_ai_r = calculate_pe_org_ai_r(
+            scenario_idiosyncratic_score, systematic_opportunity, synergy, alpha, beta
+        )
+        results.append({
+            'Scenario': scenario_name,
+            'Idiosyncratic Readiness': scenario_idiosyncratic_score,
+            'PE Org-AI-R Score': scenario_org_ai_r
+        })
+    return pd.DataFrame(results)
 
-    df_scenarios = pd.DataFrame.from_dict(scenarios, orient='index')
-    df_scenarios.index.name = 'Scenario'
-    return df_scenarios.round(2)
+# Define scenarios for InnovateCo (adjustments are deltas to raw 1-5 ratings)
+# For simplicity, let's assume direct improvement in raw ratings
+scenario_definitions = {
+    'Optimistic Case (Aggressive Investment)': {
+        'Data Infrastructure': 2, 'AI Governance': 3, 'Technology Stack': 1,
+        'Talent': 2, 'Leadership': 1, 'Use Case Portfolio': 3, 'Culture': 2
+    },
+    'Moderate Case (Targeted Investment)': {
+        'Data Infrastructure': 1, 'AI Governance': 2, 'Technology Stack': 1,
+        'Talent': 1, 'Leadership': 0, 'Use Case Portfolio': 2, 'Culture': 1
+    },
+    'Pessimistic Case (Limited Investment)': {
+        'Data Infrastructure': 0, 'AI Governance': 1, 'Technology Stack': 0,
+        'Talent': 0, 'Leadership': 0, 'Use Case Portfolio': 0, 'Culture': 0
+    }
+}
 
-# --- Execute Scenario Analysis for InnovateCo ---
-scenario_results = run_scenario_analysis(
-    innovate_co_raw_ratings,
-    target_industry,
-    innovate_co_synergy_score,
-    alpha_param,
-    beta_param
+# Run scenario analysis
+scenario_results_df = run_scenario_analysis(
+    raw_dimension_ratings, company_industry, alpha_param, beta_param, synergy_score, scenario_definitions
 )
 
-print(f"Scenario Analysis for InnovateCo in {target_industry} sector:")
-display(scenario_results)
+print(f"\n--- {company_name} - Scenario Analysis for PE Org-AI-R Score ---")
+print(scenario_results_df.round(2))
 
-# Plotting the scenario results
-fig = px.bar(scenario_results.reset_index(),
-             x='Scenario',
-             y='Org-AI-R Score',
-             color='Org-AI-R Score',
-             color_continuous_scale=px.colors.sequential.Viridis,
-             title='PE Org-AI-R Score Across Scenarios',
-             labels={'Org-AI-R Score': 'PE Org-AI-R Score'},
-             text='Org-AI-R Score',
-             height=450)
-fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-fig.update_layout(yaxis_range=[min(scenario_results['Org-AI-R Score']) - 5, max(scenario_results['Org-AI-R Score']) + 5])
-fig.show()
+# Visualization: Bar chart for scenario analysis
+scenario_results_df.set_index('Scenario')['PE Org-AI-R Score'].plot(kind='bar', figsize=(10, 6), color=['skyblue', 'lightcoral', 'lightgreen', 'orange'])
+plt.title(f'{company_name} - PE Org-AI-R Score Under Different Scenarios', fontsize=16)
+plt.ylabel('PE Org-AI-R Score (0-100)', fontsize=12)
+plt.xlabel('Scenario', fontsize=12)
+plt.ylim(0, 100)
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
 ```
 
-The scenario analysis reveals a significant range for InnovateCo's `PE Org-AI-R Score`:
-*   **Worst-Case:** If InnovateCo's `Idiosyncratic Readiness` drops by 1 point across all raw ratings, its `Org-AI-R Score` falls to **50.60**.
-*   **Base-Case:** At current ratings, the score is **62.90**.
-*   **Best-Case:** If `Idiosyncratic Readiness` improves by 1 point across all raw ratings, the score rises to **75.20**.
+### Markdown cell (explanation of execution)
 
-This spread of **24.60 points** (75.20 - 50.60) in the `Org-AI-R Score` is crucial for a Portfolio Manager. It quantifies the potential downside risk and, more importantly, the significant upside potential if targeted improvements are successfully implemented. The best-case score of 75.20 would position InnovateCo as a strong AI candidate, justifying strategic investments and highlighting a clear path to value creation and a premium exit multiple. This analysis provides a more complete picture of the investment opportunity, allowing for robust financial modeling and risk-adjusted decision-making.
+"The `Scenario Analysis` reveals a significant potential uplift for 'InnovateCo's' `PE Org-AI-R Score`. With aggressive investment, the score could potentially rise from ~49 to ~74, pushing it into the 'strong AI candidate' territory. Even a moderate investment plan could bring the score to ~63. This provides a quantifiable range for potential value creation, directly informing our firm's investment thesis and showing the Portfolio Manager the tangible benefits of a strategic AI transformation program. It allows for setting evidence-based targets for `Org-AI-R` improvement."
 
-## Section 8: Sensitivity Analysis: Pinpointing the Leveraged Dimensions
+## 8. Step 7: Perform Sensitivity Analysis of Key Dimensions
 
-As a Quantitative Analyst, it's vital to identify which specific dimensions of `Idiosyncratic Readiness` have the most significant impact on the overall `PE Org-AI-R Score`. This sensitivity analysis helps pinpoint the "levers" for value creation – the areas where improvement efforts will yield the greatest return in terms of boosting the `Org-AI-R Score`.
+### Markdown Cell — Story + Context + Real-World Relevance
 
-We will perform a one-at-a-time sensitivity analysis: for each dimension, we will
-1.  Decrease its raw rating by `sensitivity_delta` (e.g., 1 point on the 1-5 scale) while keeping other dimensions and `alpha`, `beta`, `synergy_score` constant.
-2.  Increase its raw rating by `sensitivity_delta` while keeping others constant.
-3.  Calculate the resulting `Org-AI-R Score` for each change.
-4.  The difference from the base-case `Org-AI-R Score` quantifies the sensitivity.
+"To understand which `Idiosyncratic Readiness` dimensions have the most leverage over the overall `PE Org-AI-R Score`, I'll perform a `Sensitivity Analysis`. This helps us identify the 'swing factors' – dimensions where a small improvement yields a disproportionately large increase in the total score. This is crucial for prioritizing resource allocation during the 100-day plan. If improving 'Data Infrastructure' has a much greater impact than 'Culture' on the overall score, the Portfolio Manager knows where to direct initial efforts.
 
-This approach will generate a tornado-style plot, visually representing the impact of each dimension's variation.
+I'll systematically vary each dimension's raw rating (by $\pm 1$ point on the 1-5 scale) while holding others constant, and observe the change in the `PE Org-AI-R Score`. This will highlight the most impactful areas for focus."
+
+### Code cell (function definition + function execution)
 
 ```python
 def perform_sensitivity_analysis(
     base_raw_ratings: dict,
     industry: str,
-    synergy_score: float,
     alpha: float,
     beta: float,
-    rating_delta: int = 1
+    synergy: float,
+    change_delta: int = 1 # Change in raw 1-5 rating
 ) -> pd.DataFrame:
     """
-    Performs sensitivity analysis on Idiosyncratic Readiness dimensions.
+    Performs sensitivity analysis by varying each dimension's raw rating
+    and observing the impact on the overall PE Org-AI-R Score.
 
     Args:
-        base_raw_ratings (dict): The current raw 1-5 ratings for each dimension.
-        industry (str): The industry of the target company.
-        synergy_score (float): The conceptual synergy score (0-100).
+        base_raw_ratings (dict): Base raw 1-5 ratings for the dimensions.
+        industry (str): The industry sector.
         alpha (float): Weight on organizational factors.
         beta (float): Synergy coefficient.
-        rating_delta (int): The amount to decrease/increase raw ratings for sensitivity.
+        synergy (float): Base synergy score.
+        change_delta (int): The amount to change each raw rating (e.g., +1, -1).
 
     Returns:
-        pd.DataFrame: A DataFrame showing the impact of each dimension's variation on Org-AI-R.
+        pd.DataFrame: A DataFrame showing the impact of each dimension change.
     """
-    base_idiosyncratic_readiness, _ = calculate_idiosyncratic_readiness(base_raw_ratings, industry)
-    base_org_ai_r = calculate_pe_org_ai_r(
-        base_idiosyncratic_readiness, SO_SCORES[industry], synergy_score, alpha, beta
+    results = []
+    systematic_opportunity = SYSTEMATIC_OPPORTUNITY_SCORES.get(industry)
+
+    # Calculate baseline score
+    base_idiosyncratic_results = calculate_idiosyncratic_readiness(base_raw_ratings, industry)
+    base_idiosyncratic_score = base_idiosyncratic_results['overall_score']
+    baseline_org_ai_r = calculate_pe_org_ai_r(
+        base_idiosyncratic_score, systematic_opportunity, synergy, alpha, beta
     )
 
-    sensitivity_data = []
-    for dim in dimensions:
-        # Lower scenario
-        lower_ratings = base_raw_ratings.copy()
-        lower_ratings[dim] = max(1, base_raw_ratings[dim] - rating_delta)
-        lower_idiosyncratic_readiness, _ = calculate_idiosyncratic_readiness(lower_ratings, industry)
-        lower_org_ai_r = calculate_pe_org_ai_r(
-            lower_idiosyncratic_readiness, SO_SCORES[industry], synergy_score, alpha, beta
+    for dim_to_vary in base_raw_ratings.keys():
+        # Positive change
+        positive_ratings = base_raw_ratings.copy()
+        positive_ratings[dim_to_vary] = min(5, base_raw_ratings[dim_to_vary] + change_delta)
+        pos_idiosyncratic_results = calculate_idiosyncratic_readiness(positive_ratings, industry)
+        pos_org_ai_r = calculate_pe_org_ai_r(
+            pos_idiosyncratic_results['overall_score'], systematic_opportunity, synergy, alpha, beta
         )
-        lower_impact = lower_org_ai_r - base_org_ai_r
-        sensitivity_data.append({'Dimension': dim, 'Change Type': f'-{rating_delta} Rating Points', 'Impact': lower_impact})
+        impact_pos = pos_org_ai_r - baseline_org_ai_r
+        results.append({'Dimension': dim_to_vary, 'Impact on Org-AI-R': impact_pos, 'Change Direction': f'+{change_delta} Raw Rating'})
 
-        # Upper scenario
-        upper_ratings = base_raw_ratings.copy()
-        upper_ratings[dim] = min(5, base_raw_ratings[dim] + rating_delta)
-        upper_idiosyncratic_readiness, _ = calculate_idiosyncratic_readiness(upper_ratings, industry)
-        upper_org_ai_r = calculate_pe_org_ai_r(
-            upper_idiosyncratic_readiness, SO_SCORES[industry], synergy_score, alpha, beta
+        # Negative change
+        negative_ratings = base_raw_ratings.copy()
+        negative_ratings[dim_to_vary] = max(1, base_raw_ratings[dim_to_vary] - change_delta)
+        neg_idiosyncratic_results = calculate_idiosyncratic_readiness(negative_ratings, industry)
+        neg_org_ai_r = calculate_pe_org_ai_r(
+            neg_idiosyncratic_results['overall_score'], systematic_opportunity, synergy, alpha, beta
         )
-        upper_impact = upper_org_ai_r - base_org_ai_r
-        sensitivity_data.append({'Dimension': dim, 'Change Type': f'+{rating_delta} Rating Points', 'Impact': upper_impact})
+        impact_neg = neg_org_ai_r - baseline_org_ai_r
+        results.append({'Dimension': dim_to_vary, 'Impact on Org-AI-R': impact_neg, 'Change Direction': f'-{change_delta} Raw Rating'})
 
-    df_sensitivity = pd.DataFrame(sensitivity_data)
-    df_sensitivity_pivot = df_sensitivity.pivot(index='Dimension', columns='Change Type', values='Impact')
-    df_sensitivity_pivot['Max_Abs_Impact'] = df_sensitivity_pivot.abs().max(axis=1)
-    df_sensitivity_pivot = df_sensitivity_pivot.sort_values(by='Max_Abs_Impact', ascending=True)
+    return pd.DataFrame(results).sort_values(by='Impact on Org-AI-R', ascending=False)
 
-    # Plotting
-    fig = go.Figure()
-
-    fig.add_trace(go.Bar(
-        y=df_sensitivity_pivot.index,
-        x=df_sensitivity_pivot[f'-{rating_delta} Rating Points'],
-        name=f'Decrease by {rating_delta} Rating Point',
-        orientation='h',
-        marker_color='red'
-    ))
-    fig.add_trace(go.Bar(
-        y=df_sensitivity_pivot.index,
-        x=df_sensitivity_pivot[f'+{rating_delta} Rating Points'],
-        name=f'Increase by {rating_delta} Rating Point',
-        orientation='h',
-        marker_color='green'
-    ))
-
-    fig.update_layout(
-        title=f'Sensitivity of PE Org-AI-R Score to Idiosyncratic Readiness Dimensions (Base: {base_org_ai_r:.2f})',
-        barmode='relative',
-        xaxis_title='Change in PE Org-AI-R Score',
-        yaxis_title='Dimension',
-        yaxis_autorange='reversed',
-        height=600,
-        legend_title_text='Scenario'
-    )
-    fig.show()
-
-    return df_sensitivity_pivot.drop(columns='Max_Abs_Impact')
-
-# --- Execute Sensitivity Analysis for InnovateCo ---
-sensitivity_results = perform_sensitivity_analysis(
-    innovate_co_raw_ratings,
-    target_industry,
-    innovate_co_synergy_score,
-    alpha_param,
-    beta_param
+# Perform sensitivity analysis for InnovateCo
+sensitivity_df = perform_sensitivity_analysis(
+    raw_dimension_ratings, company_industry, alpha_param, beta_param, synergy_score, change_delta=1
 )
 
-print("\nSensitivity Analysis Results (Change in Org-AI-R Score):")
-display(sensitivity_results.round(2))
+print(f"\n--- {company_name} - Sensitivity Analysis on PE Org-AI-R Score (±1 Raw Rating Change) ---")
+print(sensitivity_df.round(2))
+
+# Visualization: Sensitivity Analysis (Tornado-style chart)
+fig, ax = plt.subplots(figsize=(12, 8))
+
+# Split into positive and negative impacts
+positive_impacts = sensitivity_df[sensitivity_df['Impact on Org-AI-R'] > 0].sort_values(by='Impact on Org-AI-R', ascending=True)
+negative_impacts = sensitivity_df[sensitivity_df['Impact on Org-AI-R'] < 0].sort_values(by='Impact on Org-AI-R', ascending=False)
+
+# Combine for plotting, ensure symmetry if needed for tornado
+combined_impacts = pd.concat([positive_impacts, negative_impacts])
+combined_impacts['Label'] = combined_impacts['Dimension'] + ' (' + combined_impacts['Change Direction'] + ')'
+
+# Create a diverging bar chart (like a simplified tornado)
+sns.barplot(x='Impact on Org-AI-R', y='Label', data=combined_impacts,
+            palette='coolwarm', ax=ax)
+ax.axvline(0, color='grey', linestyle='--', linewidth=0.8) # Zero line
+ax.set_title(f'{company_name} - Sensitivity of PE Org-AI-R to Dimension Changes', fontsize=16)
+ax.set_xlabel('Impact on PE Org-AI-R Score', fontsize=12)
+ax.set_ylabel('Dimension and Change', fontsize=12)
+plt.tight_layout()
+plt.show()
 ```
 
-The sensitivity analysis plot (Tornado chart) and table clearly highlight the dimensions that most influence InnovateCo's `PE Org-AI-R Score`. For a 1-point change in the raw 1-5 rating:
+### Markdown cell (explanation of execution)
 
-*   **Most Sensitive Dimensions:**
-    *   **Data Infrastructure:** A 1-point increase in its raw rating leads to a +4.25 point increase in Org-AI-R.
-    *   **Technology Stack:** A 1-point increase leads to a +2.70 point increase.
-    *   **Talent:** A 1-point increase leads to a +2.25 point increase.
-    *   **Use Case Portfolio:** A 1-point increase leads to a +1.80 point increase.
-    These dimensions, particularly 'Data Infrastructure', 'Technology Stack', and 'Talent', represent the most impactful areas for a Portfolio Manager to focus on for value creation. Significant improvements here will yield the greatest lift in the company's overall AI readiness.
+"The sensitivity analysis plot (a diverging bar chart) clearly shows that improving 'Data Infrastructure', 'Use Case Portfolio', and 'AI Governance' (especially a +1 raw rating increase) would yield the largest positive impacts on 'InnovateCo's' overall `PE Org-AI-R Score`. Conversely, a decline in these areas would cause the most significant drop. This is due to their inherent weights and interaction within the model.
 
-*   **Least Sensitive Dimensions:**
-    *   **AI Governance:** Impact of +2.25.
-    *   **Leadership:** Impact of +1.20.
-    *   **Culture:** Impact of +0.60.
-    While important, changes in these areas have a comparatively smaller direct mathematical impact on the overall Org-AI-R score, according to the predefined weights.
+This visual reinforces to the Portfolio Manager where investment in capability building will provide the greatest return in terms of `Org-AI-R` improvement. It's a critical tool for strategic resource allocation, ensuring that foundational investments are prioritized based on their quantitative impact, not just anecdotal importance."
 
-This analysis provides a clear data-driven prioritization for the PE firm's 100-day plan and value creation roadmap. It allows the Quantitative Analyst to articulate precisely where operational improvements should be directed to maximize the return on AI investment.
+## 9. Step 8: Evaluate Exit-Readiness
 
-## Section 9: Exit Readiness Assessment: Crafting the AI Narrative for Buyers
+### Markdown Cell — Story + Context + Real-World Relevance
 
-For a PE firm, the ultimate goal is a successful exit. Strategic and financial buyers are increasingly scrutinizing a target company's AI capabilities as a key factor in valuation. The `Exit-AI-R Score` is a specialized metric designed to assess how attractive a company's AI capabilities will be to potential buyers, directly influencing the exit narrative and potential valuation premiums.
+"Finally, beyond current readiness and value creation potential, our PE firm also needs to consider a company's 'Exit-Readiness' from an AI perspective. When we eventually look to sell 'InnovateCo', potential buyers will scrutinize its AI capabilities. We use the `Exit-AI-R Score` to quantify how appealing these capabilities are likely to be to buyers, focusing on attributes that drive valuation premiums.
 
-The `Exit-AI-R` score focuses on three critical aspects buyers evaluate:
-*   $Visible$: How apparent are the AI capabilities (e.g., product features, technology stack)?
-*   $Documented$: Is the quantified AI impact (ROI, EBITDA uplift) well-substantiated with an audit trail?
-*   $Sustainable$: Are the AI capabilities embedded and sustainable, or are they one-off projects?
+The `Exit-AI-R Score` is based on three key components, each scored from 0-100:
+1.  **Visible:** How apparent are AI capabilities to buyers (e.g., product features, technology stack)?
+2.  **Documented:** Is the quantified AI impact (ROI) well-documented with an audit trail?
+3.  **Sustainable:** Are AI capabilities embedded and sustainable, or merely one-off projects?
 
-Each of these components is scored on a 0-100 scale, reflecting its maturity and appeal to buyers. The `Exit-AI-R` score is then calculated as a weighted sum:
-$$Exit-AI-R = w_1 \cdot Visible + w_2 \cdot Documented + w_3 \cdot Sustainable$$
-The weights, based on empirical evidence and buyer behavior, are set as:
-*   $w_1 = 0.35$ (Visible: first impressions matter)
-*   $w_2 = 0.40$ (Documented: buyers need proof of impact)
-*   $w_3 = 0.25$ (Sustainable: ongoing value vs. run-rate risk)
+For 'InnovateCo', our analysts provide conceptual scores for these components. Given its current low maturity, these scores are likely to be modest. The formula we use is:
+$$Exit\text{-AI-R} = w_1 \cdot Visible + w_2 \cdot Documented + w_3 \cdot Sustainable$$
+With predefined weights: $w_1 = 0.35$ (visible aspects create a strong first impression), $w_2 = 0.40$ (buyers need proof of impact), and $w_3 = 0.25$ (sustainability ensures ongoing value)."
 
-This assessment helps the Portfolio Manager and investment team build a compelling, evidence-based AI narrative to secure valuation premiums during exit. The paper highlights that AI-enabled companies can achieve **40-100% valuation uplifts**.
+### Code cell (function definition + function execution)
 
 ```python
 def calculate_exit_ai_r(
@@ -645,99 +625,71 @@ def calculate_exit_ai_r(
     w3: float = 0.25
 ) -> float:
     """
-    Calculates the Exit-AI-R Score for a company.
+    Calculates the Exit-AI-R Score.
 
     Args:
         visible_score (float): AI capabilities apparent to buyers (0-100).
         documented_score (float): Quantified AI impact with audit trail (0-100).
-        sustainable_score (float): Embedded vs. one-time AI capabilities (0-100).
-        w1 (float): Weight for Visible.
-        w2 (float): Weight for Documented.
-        w3 (float): Weight for Sustainable.
+        sustainable_score (float): Embedded capabilities vs. one-time projects (0-100).
+        w1 (float): Weight for Visible score. Default 0.35.
+        w2 (float): Weight for Documented score. Default 0.40.
+        w3 (float): Weight for Sustainable score. Default 0.25.
 
     Returns:
-        float: The final Exit-AI-R Score.
+        float: The calculated Exit-AI-R Score (0-100).
     """
-    if not (0 <= visible_score <= 100 and 0 <= documented_score <= 100 and 0 <= sustainable_score <= 100):
-        raise ValueError("All input scores must be between 0 and 100.")
-    if not np.isclose(w1 + w2 + w3, 1.0):
-        raise ValueError("Weights w1, w2, w3 must sum to 1.0.")
+    if not (w1 + w2 + w3 == 1.0):
+        # Normalize weights if they don't sum to 1, though they are defined as such in prompt
+        sum_weights = w1 + w2 + w3
+        w1 /= sum_weights
+        w2 /= sum_weights
+        w3 /= sum_weights
+        print("Warning: Weights for Exit-AI-R did not sum to 1. They have been normalized.")
 
     exit_ai_r = (w1 * visible_score) + (w2 * documented_score) + (w3 * sustainable_score)
     return exit_ai_r
 
-# --- Example for InnovateCo ---
-# Based on InnovateCo's profile (low Use Case Portfolio, average Technology Stack, nascent AI Governance)
-# we can assign conceptual scores for Visible, Documented, and Sustainable.
+# Conceptual scores for InnovateCo's Exit-AI-R components (0-100 scale)
+innovateco_visible = 30       # Currently low visibility of AI
+innovateco_documented = 20    # No documented ROI from AI initiatives
+innovateco_sustainable = 25   # Capabilities are not yet embedded
 
-innovate_co_visible = 45       # Visible: Modest product features, average tech stack.
-innovate_co_documented = 30    # Documented: Few (if any) quantifiable ROI from AI.
-innovate_co_sustainable = 40   # Sustainable: AI capabilities not yet deeply embedded.
+# Predefined weights for Exit-AI-R
+w1_exit = 0.35
+w2_exit = 0.40
+w3_exit = 0.25
 
-innovate_co_exit_ai_r = calculate_exit_ai_r(
-    innovate_co_visible,
-    innovate_co_documented,
-    innovate_co_sustainable
+# Calculate Exit-AI-R Score
+innovateco_exit_ai_r_score = calculate_exit_ai_r(
+    innovateco_visible, innovateco_documented, innovateco_sustainable,
+    w1=w1_exit, w2=w2_exit, w3=w3_exit
 )
 
-print(f"--- InnovateCo Exit-AI-R Score Calculation ---")
-print(f"Visible Score: {innovate_co_visible:.2f}")
-print(f"Documented Score: {innovate_co_documented:.2f}")
-print(f"Sustainable Score: {innovate_co_sustainable:.2f}")
-print(f"\nFinal Exit-AI-R Score for InnovateCo: {innovate_co_exit_ai_r:.2f}")
+print(f"\n--- {company_name} - Exit-AI-R Score Calculation ---")
+print(f"Visible Score: {innovateco_visible}")
+print(f"Documented Score: {innovateco_documented}")
+print(f"Sustainable Score: {innovateco_sustainable}")
+print(f"\nFinal {company_name} Exit-AI-R Score: {innovateco_exit_ai_r_score:.2f}")
 
-# Visualize Exit-AI-R breakdown
-exit_df = pd.DataFrame({
-    'Metric': ['Visible', 'Documented', 'Sustainable'],
-    'Score': [innovate_co_visible, innovate_co_documented, innovate_co_sustainable],
-    'Weight': [0.35, 0.40, 0.25]
+# Visualization: Bar chart for Exit-AI-R components
+exit_components = pd.DataFrame({
+    'Component': ['Visible', 'Documented', 'Sustainable'],
+    'Score': [innovateco_visible, innovateco_documented, innovateco_sustainable],
+    'Weight': [w1_exit, w2_exit, w3_exit]
 })
 
-fig = px.bar(exit_df,
-             x='Metric',
-             y='Score',
-             color='Weight',
-             color_continuous_scale=px.colors.sequential.Teal,
-             title='Exit-AI-R Score Breakdown for InnovateCo',
-             labels={'Score': 'Component Score (0-100)'},
-             height=450,
-             text='Score')
-fig.update_traces(texttemplate='%{text:.0f}', textposition='outside')
-fig.show()
+fig, ax = plt.subplots(figsize=(8, 5))
+sns.barplot(x='Component', y='Score', data=exit_components, palette='Pastel1', ax=ax)
+for index, row in exit_components.iterrows():
+    ax.text(index, row['Score'] + 2, f'W: {row["Weight"]:.2f}', color='black', ha="center")
+ax.set_title(f'{company_name} - Exit-AI-R Component Scores', fontsize=16)
+ax.set_ylabel('Score (0-100)', fontsize=12)
+ax.set_xlabel('Exit-Readiness Component', fontsize=12)
+plt.ylim(0, 100)
+plt.tight_layout()
+plt.show()
 ```
 
-The `Exit-AI-R Score` for InnovateCo is **37.75**. This relatively low score indicates that InnovateCo, in its current state, does not have a strong AI story that would command a significant valuation premium from potential buyers.
+### Markdown cell (explanation of execution)
 
-The breakdown highlights critical weaknesses:
-*   **Documented (Score 30):** This is the largest contributing factor to the low score, reflecting a lack of quantifiable ROI from AI initiatives. Buyers are keenly interested in proven financial impact.
-*   **Visible (Score 45):** AI capabilities are not prominently integrated into products or the technology stack, making them less apparent to buyers.
-*   **Sustainable (Score 40):** The AI efforts are likely perceived as ad-hoc projects rather than deeply embedded, ongoing capabilities.
-
-For the PE Portfolio Manager, this assessment is a stark reminder to integrate the exit narrative into the value creation plan from day one. To improve this score, InnovateCo needs to:
-1.  **Prioritize AI Use Cases with Clear ROI:** Actively track and document the financial impact of every AI initiative.
-2.  **Embed AI into Core Products/Operations:** Make AI features and capabilities clearly visible and integral to the company's offerings.
-3.  **Build Sustainable AI Infrastructure:** Focus on robust data governance, MLOps, and talent development that ensures AI capabilities are long-term assets, not transient projects.
-
-Addressing these areas will not only enhance the `PE Org-AI-R` score but, more importantly, create a compelling, evidence-based AI narrative that can significantly increase the company's valuation at exit.
-
-## Section 10: Conclusion and Strategic Roadmapping
-
-As a Private Equity professional, you've successfully leveraged the **PE Org-AI-R Readiness Simulator** to conduct a rapid, quantitative assessment of **InnovateCo**, a hypothetical target company in the Manufacturing sector.
-
-Through this workflow, you've moved beyond qualitative speculation to a data-driven understanding, gaining several critical insights:
-
-*   **Overall Readiness:** InnovateCo has a `PE Org-AI-R Score` of **62.90**, indicating moderate AI readiness with clear opportunities for strategic intervention.
-*   **Idiosyncratic Strengths & Weaknesses:** The detailed breakdown revealed areas like 'Leadership' as a relative strength, but significant gaps in 'Use Case Portfolio', 'AI Governance', and 'Talent'.
-*   **Gap Analysis:** The visualization explicitly identified 'Use Case Portfolio', 'AI Governance', and 'Talent' as priority areas where InnovateCo significantly lags behind its industry's 75th percentile benchmark.
-*   **Scenario Planning:** You've quantified the potential upside (Org-AI-R 75.20) and downside (Org-AI-R 50.60) by adjusting `Idiosyncratic Readiness` inputs, enabling a more robust risk assessment and value potential estimation.
-*   **Sensitivity Analysis:** You pinpointed 'Data Infrastructure', 'Technology Stack', and 'Talent' as the most impactful dimensions for driving changes in the overall `Org-AI-R Score`, guiding where to focus improvement efforts for maximum leverage.
-*   **Exit-Readiness:** The `Exit-AI-R Score` of **37.75** highlighted the current deficiencies in `Documented` AI impact and `Visible`/`Sustainable` capabilities, emphasizing the need to build a compelling AI narrative from day one to realize valuation premiums at exit.
-
-This Jupyter Notebook serves as a powerful, reproducible tool for a PE professional. It transforms the aspirational concept of AI readiness into a measurable, actionable framework. By applying these quantitative insights, you can:
-*   **Accelerate Deal Sourcing:** Rapidly screen target companies for AI potential.
-*   **Inform Due Diligence:** Direct deeper dives into critical capability gaps.
-*   **Develop Value Creation Roadmaps:** Prioritize investments in high-impact AI initiatives (e.g., strengthening Data Infrastructure and Talent, launching impactful Use Cases).
-*   **Benchmark Portfolio Companies:** Consistently track progress and compare performance across holdings.
-*   **Craft Compelling Exit Narratives:** Articulate the quantifiable AI-driven value to potential buyers, justifying higher multiples.
-
-This systematic approach empowers you to confidently navigate the AI landscape, unlock significant value, and ensure your portfolio companies are not just AI-aware, but AI-ready.
+"An `Exit-AI-R Score` of ~24 for 'InnovateCo' is quite low, indicating that its current AI capabilities would not command a significant valuation premium from buyers. The visualization highlights that all three components—`Visible`, `Documented`, and `Sustainable`—are weak. This tells the Portfolio Manager that if 'InnovateCo' is to achieve a favorable exit with an 'AI narrative', significant effort must be made to not only build AI capabilities but also to make them transparent, prove their financial impact, and embed them sustainably within the organization. This assessment directly influences our 'exit narrative development' and helps set targets for demonstrating auditable value to future buyers."
